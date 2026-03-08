@@ -1,0 +1,23 @@
+node_modules/
+.env
+
+# MacOS
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Seeders/dumps
+PhotoboxDbdump.json
+PhotoboxDbdump.txt
+dummy_output.txt
+test_out.txt
+test_out_cmd.txt
+test_output.txt
+out.json
+result.txt
