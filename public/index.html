@@ -6,7 +6,6 @@
     <title>📸 Photobox Queue - Pilih Lokasi</title>
     <meta name="description" content="Sistem antrian photobox yang seru dan menyenangkan!">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -340,10 +339,10 @@
     </div>
 
     <script>
-        const socket = io();
-        socket.emit('get_all_stats');
+        const evtSource = new EventSource('/api/stream/All');
 
-        socket.on('update_all_stats', (data) => {
+        evtSource.addEventListener('update_all_stats', (e) => {
+            const data = JSON.parse(e.data);
             const studio = data['Studio Utama'];
             const youth = data['Youth Center'];
 

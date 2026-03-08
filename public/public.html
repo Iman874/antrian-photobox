@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photobox Queue Selection</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <style>
         body { background-color: #121212; color: #ffffff; font-family: 'Inter', sans-serif; }
@@ -31,13 +30,10 @@
     </div>
 
     <script>
-        const socket = io({ 
-            path: '/socket.io',
-            transports: ['polling', 'websocket']
-        });
-        socket.emit('get_all_stats');
+        const evtSource = new EventSource('/api/stream/All');
 
-        socket.on('update_all_stats', (data) => {
+        evtSource.addEventListener('update_all_stats', (e) => {
+            const data = JSON.parse(e.data);
             updateEst('Studio Utama', data['Studio Utama']);
             updateEst('Youth Center', data['Youth Center']);
         });

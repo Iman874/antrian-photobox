@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-    host: 'localhost',
+    host: 'antrian.photobox.monoframe.id',
     user: 'monf3757_antrian_photobox',
     password: 'I({x^OF]?-dzUi9S',
     database: 'monf3757_antrian_photobox',

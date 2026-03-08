@@ -6,7 +6,6 @@
     <title>📸 Photobox Queue - Ambil Antrian</title>
     <meta name="description" content="Ambil nomor antrian photobox kamu sekarang!">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -515,8 +514,8 @@
     </div>
 
     <script>
-        const socket = io();
         const loc = window.location.pathname.includes('outdoor') ? 'Youth Center' : 'Studio Utama';
+        const evtSource = new EventSource('/api/stream/' + loc);
         
         const badge = document.getElementById('location-badge');
         badge.textContent = loc.toUpperCase();
@@ -527,9 +526,8 @@
         let myQueueId = localStorage.getItem('my_queue_id');
         let myQueueName = localStorage.getItem('my_queue_name');
 
-        socket.emit('join_location', loc);
-
-        socket.on('update_stats', (stats) => {
+        evtSource.addEventListener('update_stats', (e) => {
+            const stats = JSON.parse(e.data);
             document.getElementById('now-serving').textContent = stats.nowServing ? stats.nowServing.queue_number : '00';
             document.getElementById('waiting-count').textContent = stats.waiting;
             sessionDuration = stats.session_duration;
@@ -556,7 +554,7 @@
             if (myQueueId) checkMyQueue();
         });
 
-        socket.on('system_reset', () => {
+        evtSource.addEventListener('system_reset', () => {
              alert('⚠️ Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.');
              clearMyQueue();
              window.location.reload();

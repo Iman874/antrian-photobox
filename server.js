@@ -69,23 +69,62 @@ async function getStats(location) {
 }
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
+// Manajemen Klien SSE
+const clients = [];
 
-    socket.on('join_location', async (location) => {
-        socket.join(location);
-        const stats = await getStats(location);
-        socket.emit('update_stats', stats);
+// Fungsi untuk mengirim Event/Pesan ke semua klien yang terhubung (Broadcast SSE)
+function sendSSE(event, data, loc = null) {
+    clients.forEach(c => {
+        // Jika loc ditentukan, hanya kirim ke klien yang sesuai dengan lokasinya
+        // atau klien yang 'All' (seperti index.html)
+        if (!loc || c.location === loc || c.location === 'All') {
+            c.res.write(`event: ${event}\n`);
+            c.res.write(`data: ${JSON.stringify(data)}\n\n`);
+        }
     });
+}
 
-    socket.on('get_all_stats', async () => {
-        const stats1 = await getStats('Studio Utama');
-        const stats2 = await getStats('Youth Center');
-        socket.emit('update_all_stats', { 'Studio Utama': stats1, 'Youth Center': stats2 });
+// Endpoint Pendaftaran/Stream SSE
+app.get('/api/stream/:location', (req, res) => {
+    const location = req.params.location;
+    
+    // Headers wajib untuk Server-Sent Events (SSE)
+    res.set({
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
     });
+    
+    // Kirim byte kosong untuk inisialisasi awal
+    res.flushHeaders && res.flushHeaders();
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+    // Daftarkan klien baru ke dalam array
+    const newClient = { id: Date.now(), location, res };
+    clients.push(newClient);
+
+    // Kirim data awal sesaat setelah terhubung
+    if (location === 'All') {
+        getStats('Studio Utama').then(main => {
+            getStats('Youth Center').then(youth => {
+                res.write(`event: update_all_stats\n`);
+                res.write(`data: ${JSON.stringify({ 'Studio Utama': main, 'Youth Center': youth })}\n\n`);
+            });
+        });
+    } else {
+        getStats(location).then(stats => {
+            res.write(`event: update_stats\n`);
+            res.write(`data: ${JSON.stringify(stats)}\n\n`);
+        });
+    }
+
+    // Bersihkan klien saat koneksi terputus/ditutup browser
+    req.on('close', () => {
+        const index = clients.findIndex(c => c.id === newClient.id);
+        if (index !== -1) {
+            clients.splice(index, 1);
+        }
     });
+});
 });
 
 // APIs
@@ -119,10 +158,10 @@ app.post('/api/queue', async (req, res) => {
         const nextNum = (todayCount[0].cnt + 1).toString().padStart(2, '0');
         const [result] = await pool.query('INSERT INTO queues (name, queue_number, studio_location, sessions) VALUES (?, ?, ?, ?)', [name, nextNum, studio_location, sessions]);
 
-        io.to(studio_location).emit('update_stats', await getStats(studio_location));
+        sendSSE('update_stats', await getStats(studio_location), studio_location);
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
-        io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
+        sendSSE('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth }, 'All');
 
         res.json({ id: result.insertId, name, queue_number: nextNum, studio_location });
     } catch (e) {
@@ -135,11 +174,11 @@ app.post('/api/queue/cancel', async (req, res) => {
     const { id, studio_location } = req.body;
     try {
         await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['cancelled', id]);
-        io.to(studio_location).emit('update_stats', await getStats(studio_location));
+        sendSSE('update_stats', await getStats(studio_location), studio_location);
 
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
-        io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
+        sendSSE('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth }, 'All');
 
         res.json({ success: true });
     } catch (e) {
@@ -161,13 +200,13 @@ app.post('/api/admin/call_next', async (req, res) => {
             await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['called', next[0].id]);
 
             const stats = await getStats(studio_location);
-            io.to(studio_location).emit('update_stats', stats);
+            sendSSE('update_stats', stats, studio_location);
             // emit audio event
-            io.to(studio_location).emit('play_audio', next[0]);
+            sendSSE('play_audio', next[0], studio_location);
 
             const statsMain = await getStats('Studio Utama');
             const statsYouth = await getStats('Youth Center');
-            io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
+            sendSSE('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth }, 'All');
 
             res.json({ success: true, called: next[0] });
         } else {
@@ -184,7 +223,7 @@ app.post('/api/admin/recall', async (req, res) => {
     try {
         const [current] = await pool.query('SELECT * FROM queues WHERE studio_location = ? AND status = ? ORDER BY id DESC LIMIT 1', [studio_location, 'called']);
         if (current.length > 0) {
-            io.to(studio_location).emit('play_audio', current[0]);
+            sendSSE('play_audio', current[0], studio_location);
             res.json({ success: true });
         } else {
             res.json({ success: false, message: 'No active call' });
@@ -200,11 +239,11 @@ app.post('/api/admin/duration', async (req, res) => {
     try {
         await pool.query('UPDATE settings SET session_duration = ? WHERE studio_location = ?', [duration, studio_location]);
         const stats = await getStats(studio_location);
-        io.to(studio_location).emit('update_stats', stats);
+        sendSSE('update_stats', stats, studio_location);
 
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
-        io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
+        sendSSE('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth }, 'All');
 
         res.json({ success: true });
     } catch (e) {
@@ -218,11 +257,11 @@ app.post('/api/admin/max_sessions', async (req, res) => {
     try {
         await pool.query('UPDATE settings SET max_sessions = ? WHERE studio_location = ?', [max_sessions, studio_location]);
         const stats = await getStats(studio_location);
-        io.to(studio_location).emit('update_stats', stats);
+        sendSSE('update_stats', stats, studio_location);
 
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
-        io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
+        sendSSE('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth }, 'All');
 
         res.json({ success: true });
     } catch (e) {
@@ -237,12 +276,12 @@ app.post('/api/admin/reset', async (req, res) => {
         await pool.query('DELETE FROM queues WHERE studio_location = ?', [studio_location]);
 
         const stats = await getStats(studio_location);
-        io.to(studio_location).emit('system_reset');
-        io.to(studio_location).emit('update_stats', stats);
+        sendSSE('system_reset', null, studio_location);
+        sendSSE('update_stats', stats, studio_location);
 
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
-        io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
+        sendSSE('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth }, 'All');
 
         res.json({ success: true });
     } catch (e) {
