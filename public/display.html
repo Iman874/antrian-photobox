@@ -295,7 +295,7 @@
     <audio id="tts-sound" preload="auto"></audio>
 
     <script>
-        const socket = io();
+        const socket = io({ transports: ['polling'] });
         const loc = window.location.pathname.includes('outdoor') ? 'Youth Center' : 'Studio Utama';
 
         const badge = document.getElementById('location-badge');
