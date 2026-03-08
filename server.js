@@ -115,7 +115,7 @@ app.post('/api/queue', async (req, res) => {
         const [todayCount] = await pool.query('SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ? AND DATE(created_at) = CURDATE()', [studio_location]);
         const nextNum = (todayCount[0].cnt + 1).toString().padStart(2, '0');
         const [result] = await pool.query('INSERT INTO queues (name, queue_number, studio_location, sessions) VALUES (?, ?, ?, ?)', [name, nextNum, studio_location, sessions]);
-        
+
         io.to(studio_location).emit('update_stats', await getStats(studio_location));
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
@@ -133,7 +133,7 @@ app.post('/api/queue/cancel', async (req, res) => {
     try {
         await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['cancelled', id]);
         io.to(studio_location).emit('update_stats', await getStats(studio_location));
-        
+
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
         io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
@@ -150,13 +150,13 @@ app.post('/api/admin/call_next', async (req, res) => {
     try {
         // Mark current called as done
         await pool.query('UPDATE queues SET status = ? WHERE studio_location = ? AND status = ?', ['done', studio_location, 'called']);
-        
+
         // Find next waiting
         const [next] = await pool.query('SELECT * FROM queues WHERE studio_location = ? AND status = ? ORDER BY id ASC LIMIT 1', [studio_location, 'waiting']);
-        
+
         if (next.length > 0) {
             await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['called', next[0].id]);
-            
+
             const stats = await getStats(studio_location);
             io.to(studio_location).emit('update_stats', stats);
             // emit audio event
@@ -198,11 +198,11 @@ app.post('/api/admin/duration', async (req, res) => {
         await pool.query('UPDATE settings SET session_duration = ? WHERE studio_location = ?', [duration, studio_location]);
         const stats = await getStats(studio_location);
         io.to(studio_location).emit('update_stats', stats);
-        
+
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
         io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
-        
+
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -216,11 +216,11 @@ app.post('/api/admin/max_sessions', async (req, res) => {
         await pool.query('UPDATE settings SET max_sessions = ? WHERE studio_location = ?', [max_sessions, studio_location]);
         const stats = await getStats(studio_location);
         io.to(studio_location).emit('update_stats', stats);
-        
+
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
         io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
-        
+
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -232,11 +232,11 @@ app.post('/api/admin/reset', async (req, res) => {
     const { studio_location } = req.body;
     try {
         await pool.query('DELETE FROM queues WHERE studio_location = ?', [studio_location]);
-        
+
         const stats = await getStats(studio_location);
         io.to(studio_location).emit('system_reset');
         io.to(studio_location).emit('update_stats', stats);
-        
+
         const statsMain = await getStats('Studio Utama');
         const statsYouth = await getStats('Youth Center');
         io.emit('update_all_stats', { 'Studio Utama': statsMain, 'Youth Center': statsYouth });
@@ -252,12 +252,12 @@ app.get('/api/queue/:id', async (req, res) => {
     try {
         const [q] = await pool.query('SELECT * FROM queues WHERE id = ?', [req.params.id]);
         if (q.length === 0) return res.status(404).json({ error: 'Not found' });
-        
+
         const queue = q[0];
         if (queue.status !== 'waiting') {
             return res.json({ queue, beforeCount: 0 });
         }
-        
+
         const [before] = await pool.query('SELECT COUNT(*) as cnt, COALESCE(SUM(sessions), 0) as total_sessions FROM queues WHERE studio_location = ? AND status = ? AND id < ?', [queue.studio_location, 'waiting', queue.id]);
         res.json({ queue, beforeCount: before[0].cnt, beforeSessions: parseInt(before[0].total_sessions) });
     } catch (e) {
@@ -275,7 +275,7 @@ app.post('/api/tts', async (req, res) => {
             host: 'https://translate.google.com'
         });
         const audioBuffer = Buffer.from(base64Audio, 'base64');
-        res.set({'Content-Type': 'audio/mp3'});
+        res.set({ 'Content-Type': 'audio/mp3' });
         res.send(audioBuffer);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -283,7 +283,8 @@ app.post('/api/tts', async (req, res) => {
 });
 
 initDB().then(() => {
-    server.listen(3000, '0.0.0.0', () => {
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, '0.0.0.0', () => {
         const os = require('os');
         const nets = os.networkInterfaces();
         let localIP = 'localhost';
