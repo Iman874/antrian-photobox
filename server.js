@@ -7,7 +7,8 @@ const cors = require('cors');
 const googleTTS = require('google-tts-api');
 
 const app = express();
-const io = new Server(server, { 
+const server = http.createServer(app);
+const io = new Server(server, {
     cors: { origin: '*' }
 });
 
