@@ -286,7 +286,7 @@ app.post('/api/tts', async (req, res) => {
 
 initDB().then(() => {
     const PORT = process.env.PORT || 3000;
-    server.listen(PORT, '0.0.0.0', () => {
+    server.listen(PORT, () => {
         const os = require('os');
         const nets = os.networkInterfaces();
         let localIP = 'localhost';
