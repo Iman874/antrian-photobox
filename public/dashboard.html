@@ -827,7 +827,6 @@
                     document.getElementById('waiting-count').textContent = '0';
                     document.getElementById('btn-waiting-count').textContent = '0';
                     document.getElementById('total-count').textContent = '0';
-                    socket.emit('join_location', loc);
                     showToast('✅ Sistem berhasil di-reset!', 'success');
                 } else {
                     showToast('❌ Gagal mereset sistem', 'error');

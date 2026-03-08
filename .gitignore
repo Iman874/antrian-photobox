@@ -15,7 +15,10 @@ lerna-debug.log*
 # Seeders/dumps
 PhotoboxDbdump.json
 PhotoboxDbdump.txt
+dummy.js
 dummy_output.txt
+log.json
+test_e2e.js
 test_out.txt
 test_out_cmd.txt
 test_output.txt
