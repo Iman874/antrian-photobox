@@ -53,7 +53,7 @@ async function getStats(location) {
     const [waiting] = await pool.query('SELECT COUNT(*) as cnt, COALESCE(SUM(sessions), 0) as total_sessions FROM queues WHERE studio_location = ? AND status = ?', [location, 'waiting']);
     const [total] = await pool.query('SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ?', [location]);
     // Ambil antrian terakhir yang sedang dipanggil atau sudah selesai (agar layar tidak kosong jika tidak ada antrian baru)
-    const [nowServing] = await pool.query("SELECT * FROM queues WHERE studio_location = ? AND status IN ('called', 'done') ORDER BY updated_at DESC, id DESC LIMIT 1", [location]);
+    const [nowServing] = await pool.query("SELECT * FROM queues WHERE studio_location = ? AND status IN ('called', 'done') ORDER BY id DESC LIMIT 1", [location]);
     const [settings] = await pool.query('SELECT * FROM settings WHERE studio_location = ?', [location]);
 
     return {
