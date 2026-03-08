@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-    host: 'monoframe.id',
+    host: 'antrian.photobox.monoframe.id',
     user: 'monf3757_antrian_photobox',
     password: 'I({x^OF]?-dzUi9S',
     database: 'monf3757_antrian_photobox',
@@ -13,7 +13,7 @@ const pool = mysql.createPool({
 async function initDB() {
     // Create connection without database to create DB
     const initConn = await mysql.createConnection({
-        host: 'monoframe.id',
+        host: 'antrian.photobox.monoframe.id',
         user: 'monf3757_antrian_photobox',
         password: 'I({x^OF]?-dzUi9S',
     });
