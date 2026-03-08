@@ -340,7 +340,10 @@
     </div>
 
     <script>
-        const socket = io({ transports: ['polling'] });
+        const socket = io({ 
+            path: '/socket.io',
+            transports: ['polling', 'websocket']
+        });
         socket.emit('get_all_stats');
 
         socket.on('update_all_stats', (data) => {

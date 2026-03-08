@@ -7,10 +7,10 @@ const cors = require('cors');
 const googleTTS = require('google-tts-api');
 
 const app = express();
-const server = http.createServer(app);
 const io = new Server(server, { 
     cors: { origin: '*' },
-    transports: ['polling'],
+    path: '/socket.io',
+    transports: ['polling', 'websocket'],
     allowEIO3: true
 });
 
