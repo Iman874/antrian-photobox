@@ -515,10 +515,7 @@
     </div>
 
     <script>
-        const socket = io({ 
-            path: '/socket.io',
-            transports: ['polling', 'websocket']
-        });
+        const socket = io();
         const loc = window.location.pathname.includes('outdoor') ? 'Youth Center' : 'Studio Utama';
         
         const badge = document.getElementById('location-badge');

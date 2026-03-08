@@ -8,10 +8,7 @@ const googleTTS = require('google-tts-api');
 
 const app = express();
 const io = new Server(server, { 
-    cors: { origin: '*' },
-    path: '/socket.io',
-    transports: ['polling', 'websocket'],
-    allowEIO3: true
+    cors: { origin: '*' }
 });
 
 app.use(cors());

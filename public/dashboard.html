@@ -598,10 +598,7 @@
             window.location.href = '/monoframe';
         }
 
-        const socket = io({ 
-            path: '/socket.io',
-            transports: ['polling', 'websocket']
-        });
+        const socket = io();
         socket.emit('join_location', loc);
 
         // Set header
