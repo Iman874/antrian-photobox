@@ -696,7 +696,15 @@
             if (stats.max_sessions) {
                 document.getElementById('max-session-select').value = stats.max_sessions;
             }
+
+            // Update duration
+            currentDuration = stats.session_duration;
+            durationSelect.value = currentDuration;
             document.getElementById('est-session').textContent = `~${currentDuration} min`;
+
+            // Update tombol "PANGGIL SELANJUTNYA"
+            const btnWaiting = document.getElementById('btn-waiting-count');
+            if (btnWaiting) btnWaiting.textContent = stats.waiting;
         }
 
         // SSE: Jalur utama
