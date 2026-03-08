@@ -1,0 +1,26 @@
+﻿Memulai End-to-End System Testing...
+
+--- Menyiapkan sistem (Reset) ---
+Γ£à System Reset berhasil.
+
+--- Skenario 1 & 2: Client Mengambil Antrian ---
+Γ£à 10 Client berhasil antri. Waiting List = 10.
+Γ£à Estimasi antrian bekerja: Di depan Rina ada 2 orang.
+
+--- Skenario 3 & 4: Admin Call Next ---
+Γ£à Call Next 1: Now Serving = A001, Waiting = 9
+
+--- Skenario 5: Recall Signal ---
+Γ£à Admin berhasil melakukan Recall (Kirim Socket event).
+
+--- Skenario 6: Client Cancel Antrian ---
+Γ£à Andi cancel antrian. Waiting list menjadi 8.
+Γ£à Rina antrian berikutnya! Di depan Rina ada 0 orang.
+
+--- Skenario 7: Ubah Durasi Sesi ---
+Γ£à Durasi sesi berhasil diubah menjadi 3 menit (Sistem realtime akan memberitahukan update event ini ke client)
+
+--- Skenario 10: Multi Studio Isolation ---
+Γ£à Antrian Studio Utama dan Youth Center terisolasi dengan sempurna!
+
+≡ƒÄë SELURUH SKENARIO E2E SYSTEM TESTING BERHASIL TERLEWATI! ≡ƒÄë

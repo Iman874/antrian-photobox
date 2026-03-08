@@ -1,0 +1,24 @@
+﻿Membuat Dummy Data Antrian...
+Γ£à Sistem di-reset.
+
+ΓÅ│ Menambahkan 10 Client ke [Studio Utama]...
+   + Client 'Ahmad' berhasi masuk ke Studio Utama
+   + Client 'Budi' berhasi masuk ke Studio Utama
+   + Client 'Citra' berhasi masuk ke Studio Utama
+   + Client 'Dimas' berhasi masuk ke Studio Utama
+   + Client 'Eka' berhasi masuk ke Studio Utama
+   + Client 'Fahmi' berhasi masuk ke Studio Utama
+   + Client 'Gita' berhasi masuk ke Studio Utama
+   + Client 'Hadi' berhasi masuk ke Studio Utama
+   + Client 'Irfan' berhasi masuk ke Studio Utama
+   + Client 'Joko' berhasi masuk ke Studio Utama
+
+ΓÅ│ Menambahkan 5 Client ke [Youth Center]...
+   + Client 'Kiki' berhasi masuk ke Youth Center
+   + Client 'Lestari' berhasi masuk ke Youth Center
+   + Client 'Maya' berhasi masuk ke Youth Center
+   + Client 'Nia' berhasi masuk ke Youth Center
+   + Client 'Oki' berhasi masuk ke Youth Center
+
+≡ƒÄë Proses generate 15 Dummy Berhasil!
+Silakan cek browser Anda di halaman Display / Admin Dashboard, data dan waiting list sudah terisi.

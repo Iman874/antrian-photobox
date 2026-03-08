@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 Ambil Antrian Photobox</title>
+    <!-- Auto-redirect to port 3000 if accessed via Apache -->
+    <script>
+        if (window.location.port !== '3000') {
+            window.location.href = `http://${window.location.hostname}:3000/`;
+        }
+    </script>
+    <meta name="description" content="Ambil nomor antrian photobox kamu sekarang!">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --pink: #FF6B9D;
+            --blue: #4ECDC4;
+            --yellow: #FFE66D;
+            --purple: #A855F7;
+            --orange: #FF8C42;
+            --green: #06D6A0;
+            --red: #FF4757;
+            --dark: #2D3436;
+            --light: #FFF9F0;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            min-height: 100vh;
+            background: var(--light);
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(255, 107, 157, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(78, 205, 196, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(255, 230, 109, 0.15) 0%, transparent 50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 460px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Header */
+        .page-header {
+            text-align: center;
+            animation: fadeInDown 0.5s ease;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .location-badge {
+            display: inline-block;
+            padding: 10px 32px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: 1px;
+        }
+        .location-badge.studio { background: linear-gradient(135deg, var(--pink), var(--orange)); box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3); }
+        .location-badge.youth { background: linear-gradient(135deg, var(--blue), var(--purple)); box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3); }
+
+        /* Info Card */
+        .info-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 3px solid transparent;
+            animation: fadeInUp 0.5s ease 0.2s both;
+            text-align: center;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .now-serving-label {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(168, 85, 247, 0.15));
+            color: var(--purple);
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 5px 18px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .now-serving-number {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--dark);
+            text-shadow: 3px 3px 0px var(--yellow);
+            margin-bottom: 16px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 16px;
+            border-top: 2px dashed #f0f0f0;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-box .label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #bbb;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-box .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-box .value.pink { color: var(--pink); }
+        .stat-box .value.yellow { color: var(--orange); }
+        .stat-box .value.green { color: var(--green); }
+
+        /* Take Queue Button */
+        .take-queue-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, var(--pink), var(--orange));
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 0 #D94E3B, 0 8px 20px rgba(255, 107, 157, 0.3);
+            animation: fadeInUp 0.5s ease 0.4s both;
+            letter-spacing: 1px;
+        }
+
+        .take-queue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #D94E3B, 0 12px 25px rgba(255, 107, 157, 0.4);
+        }
+
+        .take-queue-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0 #D94E3B;
+        }
+
+        /* My Queue Card */
+        .my-queue-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 3px solid var(--green);
+            text-align: center;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .my-queue-label {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 5px 18px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .my-queue-number {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            text-shadow: 3px 3px 0px var(--yellow);
+            margin-bottom: 4px;
+        }
+
+        .my-queue-name {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .my-queue-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: #FAFAFA;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .grid-item {
+            text-align: center;
+        }
+
+        .grid-item .gl {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #bbb;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grid-item .gv {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .status-waiting {
+            background: rgba(255, 140, 66, 0.15);
+            color: var(--orange);
+        }
+
+        .status-called {
+            background: rgba(6, 214, 160, 0.15);
+            color: var(--green);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .cancel-btn {
+            width: 100%;
+            padding: 14px;
+            border: 3px solid #E0E0E0;
+            border-radius: 16px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #999;
+            background: #FAFAFA;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cancel-btn:hover {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(255, 71, 87, 0.05);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 249, 240, 0.85);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 24px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 28px;
+            padding: 32px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+            border: 4px solid var(--blue);
+            text-align: center;
+            animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .modal-subtitle {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #aaa;
+            margin-bottom: 24px;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 14px 20px;
+            border: 3px solid #E0E0E0;
+            border-radius: 16px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            outline: none;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .name-input:focus {
+            border-color: var(--blue);
+        }
+
+        .name-input::placeholder {
+            color: #ccc;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-cancel-modal {
+            flex: 1;
+            padding: 12px;
+            border: 3px solid #E0E0E0;
+            border-radius: 14px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #999;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel-modal:hover {
+            border-color: #ccc;
+            background: #fafafa;
+        }
+
+        .btn-submit-modal {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+        }
+
+        .btn-submit-modal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(78, 205, 196, 0.4);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #bbb;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.3s;
+            padding: 8px 16px;
+        }
+
+        .back-btn:hover { color: var(--dark); }
+
+        .hidden { display: none !important; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #ccc;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back button -->
+        <button class="back-btn" onclick="window.location.href='/'">← Kembali</button>
+
+        <!-- Header -->
+        <div class="page-header">
+            <div class="location-badge" id="location-badge">STUDIO UTAMA</div>
+        </div>
+
+        <!-- Now Serving Info Card -->
+        <div class="info-card">
+            <div class="now-serving-label">📢 SEDANG DILAYANI</div>
+            <div class="now-serving-number" id="now-serving">-</div>
+            <div class="stats-row">
+                <div class="stat-box">
+                    <span class="label">Menunggu</span>
+                    <span class="value pink" id="waiting-count">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Est. Tunggu</span>
+                    <span class="value yellow" id="est-wait">0m</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Est. Panggil</span>
+                    <span class="value green" id="est-time">~--:--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Take Queue Button -->
+        <div id="take-queue-section">
+            <button class="take-queue-btn" onclick="openModal()">
+                AMBIL ANTRIAN ✨
+            </button>
+        </div>
+
+        <!-- My Queue Card (hidden by default) -->
+        <div id="my-queue-section" class="hidden">
+            <div class="my-queue-card">
+                <div class="my-queue-label">🎫 Nomor Antrian Kamu</div>
+                <div class="my-queue-number" id="my-queue-number">00</div>
+                <div class="my-queue-name" id="my-queue-name">-</div>
+
+                <div class="my-queue-grid">
+                    <div class="grid-item">
+                        <div class="gl">Di Depan Anda</div>
+                        <div class="gv" id="my-before">0</div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="gl">Est. Menunggu</div>
+                        <div class="gv" id="my-wait">0m</div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="gl">Est. Dipanggil</div>
+                        <div class="gv" id="my-call-time">~--:--</div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="gl">Status</div>
+                        <div class="gv">
+                            <span class="status-badge status-waiting" id="my-status">⏳ MENUNGGU</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="cancel-btn" onclick="cancelQueue()">
+                    😢 Batalkan Antrian
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">MONODEV 2026 📸</div>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-title">Halo! 👋</div>
+            <div class="modal-subtitle">Siapa nama kamu?</div>
+            <input type="text" id="client-name" class="name-input" autocomplete="off" placeholder="Ketik nama kamu..." maxlength="50" style="margin-bottom: 12px;">
+            <div class="modal-subtitle" style="margin-bottom: 8px;">Berapa sesi foto?</div>
+            <select id="client-sessions" class="name-input" style="margin-bottom: 15px; appearance: none;">
+                <option value="1">1 Sesi</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="btn-cancel-modal" onclick="closeModal()">Batal</button>
+                <button class="btn-submit-modal" onclick="submitQueue()">Submit 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const loc = window.location.pathname.includes('outdoor') ? 'Youth Center' : 'Studio Utama';
+        
+        const badge = document.getElementById('location-badge');
+        badge.textContent = loc.toUpperCase();
+        badge.classList.add(loc === 'Youth Center' ? 'youth' : 'studio');
+        document.title = `📸 ${loc} - Antrian Photobox`;
+
+        let sessionDuration = 7;
+        let myQueueId = localStorage.getItem('my_queue_id');
+        let myQueueName = localStorage.getItem('my_queue_name');
+
+        socket.emit('join_location', loc);
+
+        socket.on('update_stats', (stats) => {
+            document.getElementById('now-serving').textContent = stats.nowServing ? stats.nowServing.queue_number : '00';
+            document.getElementById('waiting-count').textContent = stats.waiting;
+            sessionDuration = stats.session_duration;
+
+            const waitTimeMin = (stats.waiting_sessions || 0) * sessionDuration;
+            const estTime = dayjs().add(waitTimeMin, 'minute').format('HH:mm');
+
+            document.getElementById('est-wait').textContent = `${waitTimeMin}m`;
+            document.getElementById('est-time').textContent = `~${estTime}`;
+            
+            if (stats.max_sessions) {
+                const selectEl = document.getElementById('client-sessions');
+                if (selectEl.options.length !== stats.max_sessions) {
+                    selectEl.innerHTML = '';
+                    for (let i = 1; i <= stats.max_sessions; i++) {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = `${i} Sesi`;
+                        selectEl.appendChild(opt);
+                    }
+                }
+            }
+
+            if (myQueueId) checkMyQueue();
+        });
+
+        socket.on('system_reset', () => {
+             alert('⚠️ Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.');
+             clearMyQueue();
+             window.location.reload();
+        });
+
+        // Check if we already have queue
+        if (myQueueId) {
+            document.getElementById('take-queue-section').classList.add('hidden');
+            document.getElementById('my-queue-section').classList.remove('hidden');
+            checkMyQueue();
+        }
+
+        async function checkMyQueue() {
+            if (!myQueueId) return;
+            try {
+                const res = await fetch(`/api/queue/${myQueueId}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    clearMyQueue();
+                    return;
+                }
+
+                const q = data.queue;
+                document.getElementById('my-queue-number').textContent = q.queue_number;
+                document.getElementById('my-queue-name').textContent = `Atas nama: ${q.name}`;
+
+                if (q.status === 'cancelled' || q.status === 'done') {
+                    clearMyQueue();
+                    alert('🎉 Antrian telah selesai / dibatalkan.');
+                    return;
+                }
+
+                const statusEl = document.getElementById('my-status');
+                if (q.status === 'called') {
+                    if (statusEl.textContent !== '🟢 DIPANGGIL!') {
+                        if ("Notification" in window && Notification.permission === "granted") {
+                            new Notification(`Giliran Kamu! (${q.queue_number})`, {
+                                body: `Silakan menuju ${loc} sekarang!`
+                            });
+                        }
+                        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    }
+                    
+                    statusEl.textContent = '🟢 DIPANGGIL!';
+                    statusEl.className = 'status-badge status-called';
+                    document.getElementById('my-before').textContent = '0';
+                    document.getElementById('my-wait').textContent = '0m';
+                    document.getElementById('my-call-time').textContent = 'SEKARANG!';
+                } else if (q.status === 'waiting') {
+                    statusEl.textContent = '⏳ MENUNGGU';
+                    statusEl.className = 'status-badge status-waiting';
+
+                    const beforeSessions = data.beforeSessions || 0;
+                    const waitMin = beforeSessions * sessionDuration;
+                    const estTime = dayjs().add(waitMin, 'minute').format('HH:mm');
+
+                    document.getElementById('my-before').textContent = data.beforeCount;
+                    document.getElementById('my-wait').textContent = `${waitMin}m`;
+                    document.getElementById('my-call-time').textContent = `~${estTime}`;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function openModal() {
+            if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('client-name').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('client-name').value = '';
+        }
+
+        async function submitQueue() {
+            const name = document.getElementById('client-name').value.trim();
+            const sessions = parseInt(document.getElementById('client-sessions').value) || 1;
+            if (!name) return alert('⚠️ Nama harus diisi ya!');
+
+            try {
+                const res = await fetch('/api/queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, studio_location: loc, sessions })
+                });
+                const data = await res.json();
+                myQueueId = data.id;
+                myQueueName = name;
+                localStorage.setItem('my_queue_id', myQueueId);
+                localStorage.setItem('my_queue_name', myQueueName);
+
+                closeModal();
+                document.getElementById('take-queue-section').classList.add('hidden');
+                document.getElementById('my-queue-section').classList.remove('hidden');
+                checkMyQueue();
+            } catch (e) { console.error(e); }
+        }
+
+        async function cancelQueue() {
+            if (!confirm('😢 Yakin mau batalkan antrian kamu?')) return;
+            try {
+                const res = await fetch('/api/queue/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: myQueueId, studio_location: loc })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    clearMyQueue();
+                    alert('✅ Antrian berhasil dibatalkan.');
+                } else {
+                    alert('❌ Gagal membatalkan. Mungkin sudah dipanggil atau selesai.');
+                    checkMyQueue();
+                }
+            } catch (e) {
+                console.error(e);
+                alert('❌ Error jaringan. Tidak dapat membatalkan.');
+            }
+        }
+
+        function clearMyQueue() {
+            myQueueId = null;
+            myQueueName = null;
+            localStorage.removeItem('my_queue_id');
+            localStorage.removeItem('my_queue_name');
+            document.getElementById('take-queue-section').classList.remove('hidden');
+            document.getElementById('my-queue-section').classList.add('hidden');
+        }
+
+        // Enter key to submit
+        document.getElementById('client-name').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitQueue();
+        });
+    </script>
+</body>
+</html>

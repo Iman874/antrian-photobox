@@ -1,0 +1,21 @@
+{
+  "name": "website-antrian-photobox",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.13.6",
+    "cors": "^2.8.6",
+    "dayjs": "^1.11.19",
+    "express": "^5.2.1",
+    "google-tts-api": "^2.0.2",
+    "mysql2": "^3.19.0",
+    "socket.io": "^4.8.3"
+  }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photobox Queue Selection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <style>
+        body { background-color: #121212; color: #ffffff; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; }
+        .text-glow { text-shadow: 0 0 10px rgba(56,189,248,0.8); }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4 min-h-screen">
+    <h1 class="text-4xl font-bold mb-12 text-center text-glow">Pilih Lokasi Photobox</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+        <a href="/indoor/queue" class="glass p-8 flex flex-col items-center hover:bg-white/10 transition-colors">
+            <h2 class="text-3xl font-semibold mb-6 text-white text-center">STUDIO UTAMA</h2>
+            <div class="text-gray-400 mb-2 font-semibold tracking-widest text-sm">EST CALL TIME</div>
+            <div id="est-Studio Utama" class="text-5xl font-bold text-blue-400">~--.--</div>
+        </a>
+
+        <a href="/outdoor/queue" class="glass p-8 flex flex-col items-center hover:bg-white/10 transition-colors">
+            <h2 class="text-3xl font-semibold mb-6 text-white text-center">YOUTH CENTER</h2>
+            <div class="text-gray-400 mb-2 font-semibold tracking-widest text-sm">EST CALL TIME</div>
+            <div id="est-Youth Center" class="text-5xl font-bold text-blue-400">~--.--</div>
+        </a>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('get_all_stats');
+
+        socket.on('update_all_stats', (data) => {
+            updateEst('Studio Utama', data['Studio Utama']);
+            updateEst('Youth Center', data['Youth Center']);
+        });
+
+        function updateEst(loc, stats) {
+            const waiting = stats ? (stats.waiting || 0) : 0;
+            const dur = stats ? (stats.session_duration || 5) : 5;
+            const waitTimeMin = waiting * dur;
+            
+            const estTime = dayjs().add(waitTimeMin, 'minute').format('HH:mm');
+            const el = document.getElementById(`est-${loc}`);
+            if(el) el.innerText = `~${estTime}`;
+        }
+    </script>
+</body>
+</html>

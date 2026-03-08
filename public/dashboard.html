@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎛️ Admin Dashboard - Monoframe</title>
+    <!-- Auto-redirect to port 3000 if accessed via Apache -->
+    <script>
+        if (window.location.port !== '3000') {
+            window.location.href = `http://${window.location.hostname}:3000/`;
+        }
+    </script>
+    <meta name="description" content="Admin dashboard untuk mengelola antrian photobox">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --pink: #FF6B9D;
+            --blue: #4ECDC4;
+            --yellow: #FFE66D;
+            --purple: #A855F7;
+            --orange: #FF8C42;
+            --green: #06D6A0;
+            --red: #FF4757;
+            --dark: #2D3436;
+            --light: #FFF9F0;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            min-height: 100vh;
+            background: var(--light);
+            background-image:
+                radial-gradient(circle at 15% 25%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 75%, rgba(78, 205, 196, 0.08) 0%, transparent 50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeInDown 0.4s ease;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: 1px;
+        }
+        .header-badge.studio { background: linear-gradient(135deg, var(--pink), var(--orange)); }
+        .header-badge.youth { background: linear-gradient(135deg, var(--blue), var(--purple)); }
+
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--green);
+            letter-spacing: 1px;
+        }
+
+        /* Section card */
+        .section-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.04);
+            border: 2px solid #F0F0F0;
+            animation: fadeInUp 0.4s ease both;
+        }
+
+        .section-card:nth-child(2) { animation-delay: 0.1s; }
+        .section-card:nth-child(3) { animation-delay: 0.15s; }
+        .section-card:nth-child(4) { animation-delay: 0.2s; }
+        .section-card:nth-child(5) { animation-delay: 0.25s; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: #FAFAFA;
+            border-bottom: 2px solid #F0F0F0;
+        }
+
+        .section-num {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--purple);
+            background: rgba(168, 85, 247, 0.1);
+            padding: 2px 10px;
+            border-radius: 10px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #bbb;
+            letter-spacing: 2px;
+        }
+
+        .section-body {
+            padding: 20px;
+        }
+
+        /* Currently Serving */
+        .serving-area {
+            text-align: center;
+            position: relative;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .serving-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #ccc;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .serving-number {
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--dark);
+            text-shadow: 3px 3px 0px var(--yellow);
+            line-height: 1;
+        }
+
+        .serving-name {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #aaa;
+            margin-top: 8px;
+        }
+
+        .ready-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--green);
+            letter-spacing: 1px;
+        }
+
+        /* Audio System */
+        .audio-toggle-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: 3px solid #E0E0E0;
+            background: white;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .audio-toggle-btn.active {
+            border-color: var(--green);
+            background: rgba(6, 214, 160, 0.08);
+            color: var(--green);
+        }
+
+        .audio-toggle-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 0;
+        }
+
+        .stat-cell {
+            text-align: center;
+            padding: 14px;
+            border-right: 2px solid #F0F0F0;
+        }
+
+        .stat-cell:last-child { border-right: none; }
+
+        .stat-cell .sl {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #ccc;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .stat-cell .sv {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Duration Dropdown */
+        .duration-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .duration-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding: 10px 40px 10px 16px;
+            border-radius: 14px;
+            border: 3px solid var(--purple);
+            background: white;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--purple);
+            cursor: pointer;
+            transition: all 0.3s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A855F7' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 12px;
+            min-width: 90px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.15);
+        }
+
+        .duration-select:focus {
+            outline: none;
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+        }
+
+        .duration-select option {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            padding: 8px;
+        }
+
+        /* Action buttons */
+        .call-next-btn {
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 18px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 0 #04AB82, 0 8px 20px rgba(6, 214, 160, 0.3);
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .call-next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #04AB82, 0 12px 25px rgba(6, 214, 160, 0.4);
+        }
+
+        .call-next-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0 #04AB82;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .secondary-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 14px;
+            border: 3px solid #E0E0E0;
+            background: white;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .recall-btn {
+            color: var(--orange);
+        }
+        .recall-btn:hover {
+            border-color: var(--orange);
+            background: rgba(255, 140, 66, 0.06);
+        }
+
+        .reset-btn {
+            color: var(--red);
+        }
+        .reset-btn:hover {
+            border-color: var(--red);
+            background: rgba(255, 71, 87, 0.06);
+        }
+
+        /* Info row */
+        .info-row {
+            display: flex;
+            gap: 0;
+        }
+
+        .info-cell {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border-right: 2px solid #F0F0F0;
+        }
+
+        .info-cell:last-child { border-right: none; }
+
+        .info-cell .il {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #ccc;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .info-cell .iv {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Links section */
+        .links-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .link-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 14px;
+            border: 3px solid #F0F0F0;
+            background: white;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .link-btn:hover {
+            border-color: var(--purple);
+            color: var(--purple);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #ccc;
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+
+        /* Notification toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 200;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: rgba(6, 214, 160, 0.95);
+            color: white;
+            box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
+        }
+
+        .toast.error {
+            background: rgba(255, 71, 87, 0.95);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-badge" id="header-badge">🎛️ STUDIO UTAMA</div>
+            <div class="connection-status">
+                <div class="connection-dot"></div>
+                CONNECTED
+            </div>
+        </div>
+
+        <!-- 01 Currently Serving -->
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-num">01</span>
+                <span class="section-title">SEDANG DILAYANI</span>
+            </div>
+            <div class="section-body">
+                <div class="serving-area">
+                    <div class="serving-label">NOMOR ANTRIAN</div>
+                    <div class="serving-number" id="now-serving">-</div>
+                    <div class="serving-name" id="now-serving-name">Belum ada</div>
+                    <div class="ready-badge">✅ READY</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 02 Audio System -->
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-num">02</span>
+                <span class="section-title">AUDIO SYSTEM</span>
+            </div>
+            <div class="section-body">
+                <button class="audio-toggle-btn" id="audio-btn" onclick="toggleAudio()">
+                    <span id="audio-icon">🔇</span>
+                    <span id="audio-label">AKTIFKAN AUDIO</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="section-card">
+            <div class="stats-row">
+                <div class="stat-cell">
+                    <div class="sl">Menunggu</div>
+                    <div class="sv" id="waiting-count" style="color: var(--orange);">0</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="sl">Total</div>
+                    <div class="sv" id="total-count">0</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="sl">Waktu Sesi</div>
+                    <div class="duration-wrapper" id="duration-wrapper">
+                        <select class="duration-select" id="duration-select" onchange="updateDuration(parseInt(this.value))">
+                            <option value="3">3 mnt</option>
+                            <option value="4">4 mnt</option>
+                            <option value="5">5 mnt</option>
+                            <option value="6">6 mnt</option>
+                            <option value="7">7 mnt</option>
+                            <option value="8">8 mnt</option>
+                            <option value="9">9 mnt</option>
+                            <option value="10">10 mnt</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="stat-cell" style="border-right: none;">
+                    <div class="sl">Max Sesi</div>
+                    <div class="duration-wrapper">
+                        <select class="duration-select" id="max-session-select" onchange="updateMaxSessions(parseInt(this.value))">
+                            <option value="1">1 Sesi</option>
+                            <option value="2">2 Sesi</option>
+                            <option value="3">3 Sesi</option>
+                            <option value="4">4 Sesi</option>
+                            <option value="5">5 Sesi</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 03 Actions -->
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-num">03</span>
+                <span class="section-title">AKSI</span>
+            </div>
+            <div class="section-body">
+                <button class="call-next-btn" onclick="callNext()">
+                    📢 PANGGIL SELANJUTNYA (<span id="btn-waiting-count">0</span>)
+                </button>
+                <div class="action-row">
+                    <button class="secondary-btn recall-btn" onclick="recall()">🔁 Panggil Ulang</button>
+                    <button class="secondary-btn reset-btn" onclick="systemReset()">🗑️ Reset Sistem</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Row -->
+        <div class="section-card">
+            <div class="info-row">
+                <div class="info-cell">
+                    <div class="il">Jam Sekarang</div>
+                    <div class="iv" id="current-time">--:--</div>
+                </div>
+                <div class="info-cell">
+                    <div class="il">Est. Sesi</div>
+                    <div class="iv" id="est-session">~7 min</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 04 Links -->
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-num">04</span>
+                <span class="section-title">LINKS</span>
+            </div>
+            <div class="section-body">
+                <div class="links-row">
+                    <a id="link-visitor" href="/" class="link-btn">👥 Visitor Page</a>
+                    <a id="link-display" href="/" class="link-btn">📺 Display Screen</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <span id="footer-loc">STUDIO UTAMA</span> • MONODEV 2026
+        </div>
+    </div>
+
+    <!-- Audio elements -->
+    <audio id="bell-sound" src="/bell.mp3" preload="auto"></audio>
+    <audio id="tts-sound" preload="auto"></audio>
+
+    <script>
+        // Auth check
+        const authLocation = sessionStorage.getItem('admin_auth');
+        const loc = window.location.pathname.includes('outdoor') ? 'Youth Center' : 'Studio Utama';
+
+        if (!authLocation || authLocation !== loc) {
+            window.location.href = '/monoframe';
+        }
+
+        const socket = io();
+        socket.emit('join_location', loc);
+
+        // Set header
+        const badge = document.getElementById('header-badge');
+        badge.textContent = `🎛️ ${loc.toUpperCase()}`;
+        badge.classList.add(loc === 'Youth Center' ? 'youth' : 'studio');
+        document.getElementById('footer-loc').textContent = loc.toUpperCase();
+        document.title = `🎛️ ${loc} - Admin Dashboard`;
+
+        // Set links
+        const locPath = loc === 'Youth Center' ? 'outdoor' : 'indoor';
+        document.getElementById('link-visitor').href = `/${locPath}/queue`;
+        document.getElementById('link-display').href = `/display/${locPath}`;
+
+        // Audio - iOS Safari compatible
+        let audioEnabled = false;
+        let audioCtx = null;
+        let bellBuffer = null;
+        let bellAudioEl = null;
+
+        // Pre-load bell as HTML audio element (reusable)
+        function preloadBell() {
+            bellAudioEl = document.getElementById('bell-sound');
+            // Also load via Web Audio API for iOS
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            fetch('/bell.mp3')
+                .then(r => r.arrayBuffer())
+                .then(buf => audioCtx.decodeAudioData(buf))
+                .then(decoded => { bellBuffer = decoded; })
+                .catch(e => console.warn('Bell preload error:', e));
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const btn = document.getElementById('audio-btn');
+            const icon = document.getElementById('audio-icon');
+            const label = document.getElementById('audio-label');
+
+            if (audioEnabled) {
+                btn.classList.add('active');
+                icon.textContent = '🔊';
+                label.textContent = 'AUDIO AKTIF';
+
+                // Initialize AudioContext on user gesture (required for iOS Safari)
+                if (!audioCtx) {
+                    preloadBell();
+                }
+                // Resume AudioContext (iOS Safari suspends it)
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                // Play and immediately pause bell to unlock HTML audio on iOS
+                if (bellAudioEl) {
+                    bellAudioEl.muted = true;
+                    bellAudioEl.play().then(() => {
+                        bellAudioEl.pause();
+                        bellAudioEl.currentTime = 0;
+                        bellAudioEl.muted = false;
+                    }).catch(() => {});
+                }
+                showToast('🔊 Audio diaktifkan!', 'success');
+            } else {
+                btn.classList.remove('active');
+                icon.textContent = '🔇';
+                label.textContent = 'AKTIFKAN AUDIO';
+                showToast('🔇 Audio dimatikan', 'error');
+            }
+        }
+
+        // Preload on page load
+        preloadBell();
+
+        // Duration dropdown
+        const defaultDuration = loc === 'Youth Center' ? 5 : 7;
+        let currentDuration = defaultDuration;
+        const durationSelect = document.getElementById('duration-select');
+        durationSelect.value = currentDuration;
+
+        // Socket events
+        socket.on('update_stats', (stats) => {
+            document.getElementById('now-serving').textContent = stats.nowServing ? stats.nowServing.queue_number : '00';
+            document.getElementById('now-serving-name').textContent = stats.nowServing ? `Atas nama: ${stats.nowServing.name} (${stats.nowServing.sessions} Sesi)` : 'Belum ada antrian';
+            document.getElementById('waiting-count').textContent = stats.waiting;
+            document.getElementById('btn-waiting-count').textContent = stats.waiting;
+            document.getElementById('total-count').textContent = stats.total;
+
+            currentDuration = stats.session_duration;
+            durationSelect.value = currentDuration;
+            if (stats.max_sessions) {
+                document.getElementById('max-session-select').value = stats.max_sessions;
+            }
+            document.getElementById('est-session').textContent = `~${currentDuration} min`;
+        });
+
+        socket.on('play_audio', (queue) => {
+            if (!audioEnabled) return;
+            playChimeAndSpeak(queue.queue_number, queue.name);
+        });
+
+        async function playBellSound() {
+            // Try Web Audio API first (most reliable on iOS)
+            if (audioCtx && bellBuffer) {
+                try {
+                    if (audioCtx.state === 'suspended') await audioCtx.resume();
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = bellBuffer;
+                    source.connect(audioCtx.destination);
+                    source.start(0);
+                    return new Promise(resolve => {
+                        source.onended = resolve;
+                        setTimeout(resolve, 3000);
+                    });
+                } catch (e) {
+                    console.warn('Web Audio bell failed, fallback:', e);
+                }
+            }
+            // Fallback to HTML audio element
+            if (bellAudioEl) {
+                try {
+                    bellAudioEl.currentTime = 0;
+                    await bellAudioEl.play();
+                    return new Promise(resolve => {
+                        bellAudioEl.onended = resolve;
+                        setTimeout(resolve, 3000);
+                    });
+                } catch (e) {
+                    console.warn('HTML Audio bell failed:', e);
+                }
+            }
+        }
+
+        async function playChimeAndSpeak(number, name) {
+            try {
+                // Play bell
+                await playBellSound();
+
+                // Small pause after bell
+                await new Promise(r => setTimeout(r, 500));
+
+                // TTS
+                const text = `Nomor antrian ${number} atas nama ${name}, segera ke photobox sekarang`;
+                const response = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                // For iOS Safari: use existing audio element approach
+                const ttsAudio = document.getElementById('tts-sound');
+                ttsAudio.src = audioUrl;
+                ttsAudio.load();
+                await ttsAudio.play();
+
+                // Cleanup blob URL after play
+                ttsAudio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                };
+            } catch (e) {
+                console.error("Audio/TTS Error:", e);
+            }
+        }
+
+        // Actions
+        async function callNext() {
+            try {
+                const res = await fetch('/api/admin/call_next', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studio_location: loc })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`📢 Memanggil ${data.called.queue_number} - ${data.called.name}`, 'success');
+                } else {
+                    showToast('😅 Tidak ada antrian menunggu', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('❌ Error koneksi', 'error');
+            }
+        }
+
+        async function recall() {
+            try {
+                const res = await fetch('/api/admin/recall', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studio_location: loc })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('🔁 Memanggil ulang...', 'success');
+                } else {
+                    showToast('😅 Tidak ada antrian aktif', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('❌ Error koneksi', 'error');
+            }
+        }
+
+        async function systemReset() {
+            if (!confirm(`⚠️ PERHATIAN!\n\nYakin ingin mereset SEMUA antrian untuk ${loc}?\n\nSemua data antrian akan dihapus!`)) return;
+            try {
+                const res = await fetch('/api/admin/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studio_location: loc })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('now-serving').textContent = '00';
+                    document.getElementById('now-serving-name').textContent = 'Belum ada antrian';
+                    document.getElementById('waiting-count').textContent = '0';
+                    document.getElementById('btn-waiting-count').textContent = '0';
+                    document.getElementById('total-count').textContent = '0';
+                    socket.emit('join_location', loc);
+                    showToast('✅ Sistem berhasil di-reset!', 'success');
+                } else {
+                    showToast('❌ Gagal mereset sistem', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('❌ Error koneksi', 'error');
+            }
+        }
+
+        async function updateDuration(duration) {
+            try {
+                await fetch('/api/admin/duration', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studio_location: loc, duration })
+                });
+                showToast(`⏱️ Durasi sesi diubah ke ${duration} menit`, 'success');
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateMaxSessions(max_sessions) {
+            try {
+                await fetch('/api/admin/max_sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studio_location: loc, max_sessions })
+                });
+                showToast(`🔄 Max sesi diubah ke ${max_sessions} Sesi`, 'success');
+            } catch (e) { console.error(e); }
+        }
+
+        // Toast notifications
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            const h = now.getHours().toString().padStart(2, '0');
+            const m = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('current-time').textContent = `${h}:${m}`;
+        }
+        updateClock();
+        setInterval(updateClock, 10000);
+    </script>
+</body>
+</html>
