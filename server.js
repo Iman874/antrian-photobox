@@ -327,7 +327,7 @@ initDB().then(() => {
         }
         console.log('');
         console.log('===========================================');
-        console.log('  🎉 Server Antrian Photobox Ready!');
+        console.log('  🎉 Server Antrian Monobox Ready!');
         console.log('===========================================');
         console.log(`  📱 Client   : http://${localIP}:3000`);
         console.log(`  🔐 Admin    : http://${localIP}:3000/monoframe`);

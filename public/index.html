@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Photobox Queue - Pilih Lokasi</title>
-    <meta name="description" content="Sistem antrian photobox yang seru dan menyenangkan!">
+    <title>📸 Monobox Queue - Pilih Lokasi</title>
+    <meta name="description" content="Sistem antrian Monobox yang seru dan menyenangkan!">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         :root {
             --pink: #FF6B9D;
@@ -54,16 +59,51 @@
             pointer-events: none;
             z-index: 0;
         }
-        .floating-emoji:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
-        .floating-emoji:nth-child(2) { top: 20%; right: 8%; animation-delay: 1s; }
-        .floating-emoji:nth-child(3) { bottom: 15%; left: 10%; animation-delay: 2s; }
-        .floating-emoji:nth-child(4) { bottom: 25%; right: 5%; animation-delay: 3s; }
-        .floating-emoji:nth-child(5) { top: 50%; left: 2%; animation-delay: 4s; }
+
+        .floating-emoji:nth-child(1) {
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .floating-emoji:nth-child(2) {
+            top: 20%;
+            right: 8%;
+            animation-delay: 1s;
+        }
+
+        .floating-emoji:nth-child(3) {
+            bottom: 15%;
+            left: 10%;
+            animation-delay: 2s;
+        }
+
+        .floating-emoji:nth-child(4) {
+            bottom: 25%;
+            right: 5%;
+            animation-delay: 3s;
+        }
+
+        .floating-emoji:nth-child(5) {
+            top: 50%;
+            left: 2%;
+            animation-delay: 4s;
+        }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            25% { transform: translateY(-15px) rotate(5deg); }
-            75% { transform: translateY(10px) rotate(-5deg); }
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            25% {
+                transform: translateY(-15px) rotate(5deg);
+            }
+
+            75% {
+                transform: translateY(10px) rotate(-5deg);
+            }
         }
 
         /* Header */
@@ -97,14 +137,31 @@
         }
 
         @keyframes sparkle {
-            0%, 100% { transform: scale(1) rotate(0deg); }
-            50% { transform: scale(1.3) rotate(15deg); }
+
+            0%,
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+
+            50% {
+                transform: scale(1.3) rotate(15deg);
+            }
         }
 
         @keyframes bounceIn {
-            0% { transform: scale(0); opacity: 0; }
-            60% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .subtitle {
@@ -120,8 +177,15 @@
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Section label */
@@ -176,19 +240,36 @@
             border-radius: 24px 24px 0 0;
         }
 
-        .card-studio::before { background: linear-gradient(90deg, var(--pink), var(--orange)); }
-        .card-youth::before { background: linear-gradient(90deg, var(--blue), var(--purple)); }
+        .card-studio::before {
+            background: linear-gradient(90deg, var(--pink), var(--orange));
+        }
 
-        .card-studio { border-color: rgba(255, 107, 157, 0.3); }
-        .card-youth { border-color: rgba(78, 205, 196, 0.3); }
+        .card-youth::before {
+            background: linear-gradient(90deg, var(--blue), var(--purple));
+        }
+
+        .card-studio {
+            border-color: rgba(255, 107, 157, 0.3);
+        }
+
+        .card-youth {
+            border-color: rgba(78, 205, 196, 0.3);
+        }
 
         .location-card:hover {
             transform: translateY(-6px) scale(1.02);
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
         }
 
-        .card-studio:hover { border-color: var(--pink); background: #FFF5F7; }
-        .card-youth:hover { border-color: var(--blue); background: #F0FFFE; }
+        .card-studio:hover {
+            border-color: var(--pink);
+            background: #FFF5F7;
+        }
+
+        .card-youth:hover {
+            border-color: var(--blue);
+            background: #F0FFFE;
+        }
 
         .card-icon {
             font-size: 3.5rem;
@@ -197,8 +278,15 @@
         }
 
         @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
 
         .card-title {
@@ -207,8 +295,13 @@
             margin-bottom: 6px;
         }
 
-        .card-studio .card-title { color: var(--pink); }
-        .card-youth .card-title { color: var(--blue); }
+        .card-studio .card-title {
+            color: var(--pink);
+        }
+
+        .card-youth .card-title {
+            color: var(--blue);
+        }
 
         .card-subtitle {
             font-size: 0.85rem;
@@ -218,13 +311,14 @@
             margin-bottom: 16px;
         }
 
-        .card-studio .card-subtitle { 
-            background: rgba(255, 107, 157, 0.1); 
-            color: var(--pink); 
+        .card-studio .card-subtitle {
+            background: rgba(255, 107, 157, 0.1);
+            color: var(--pink);
         }
-        .card-youth .card-subtitle { 
-            background: rgba(78, 205, 196, 0.1); 
-            color: var(--blue); 
+
+        .card-youth .card-subtitle {
+            background: rgba(78, 205, 196, 0.1);
+            color: var(--blue);
         }
 
         .card-stats {
@@ -267,16 +361,28 @@
             z-index: 1;
         }
 
-        .footer span { color: var(--pink); }
+        .footer span {
+            color: var(--pink);
+        }
 
         /* Mobile responsiveness */
         @media (max-width: 400px) {
-            .logo-badge { font-size: 1.6rem; padding: 12px 28px; }
-            .card-icon { font-size: 2.5rem; }
-            .card-title { font-size: 1.25rem; }
+            .logo-badge {
+                font-size: 1.6rem;
+                padding: 12px 28px;
+            }
+
+            .card-icon {
+                font-size: 2.5rem;
+            }
+
+            .card-title {
+                font-size: 1.25rem;
+            }
         }
     </style>
 </head>
+
 <body>
     <!-- Floating decorations -->
     <div class="floating-emoji">📸</div>
@@ -288,7 +394,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div class="logo-badge">📸 PHOTOBOX</div>
+            <div class="logo-badge">📸 Monobox</div>
             <div class="subtitle">🎉 Sistem Antrian Ceria 🎉</div>
         </div>
 
@@ -367,4 +473,5 @@
         }, 500);
     </script>
 </body>
+
 </html>

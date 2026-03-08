@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Photobox Queue - Ambil Antrian</title>
-    <meta name="description" content="Ambil nomor antrian photobox kamu sekarang!">
+    <title>📸 Monobox Queue - Ambil Antrian</title>
+    <meta name="description" content="Ambil nomor antrian Monobox kamu sekarang!">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         :root {
             --pink: #FF6B9D;
@@ -53,8 +58,15 @@
         }
 
         @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .location-badge {
@@ -66,8 +78,16 @@
             color: white;
             letter-spacing: 1px;
         }
-        .location-badge.studio { background: linear-gradient(135deg, var(--pink), var(--orange)); box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3); }
-        .location-badge.youth { background: linear-gradient(135deg, var(--blue), var(--purple)); box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3); }
+
+        .location-badge.studio {
+            background: linear-gradient(135deg, var(--pink), var(--orange));
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+        }
+
+        .location-badge.youth {
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+        }
 
         /* Info Card */
         .info-card {
@@ -82,8 +102,15 @@
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .now-serving-label {
@@ -132,9 +159,17 @@
             font-weight: 700;
         }
 
-        .stat-box .value.pink { color: var(--pink); }
-        .stat-box .value.yellow { color: var(--orange); }
-        .stat-box .value.green { color: var(--green); }
+        .stat-box .value.pink {
+            color: var(--pink);
+        }
+
+        .stat-box .value.yellow {
+            color: var(--orange);
+        }
+
+        .stat-box .value.green {
+            color: var(--green);
+        }
 
         /* Take Queue Button */
         .take-queue-btn {
@@ -177,8 +212,15 @@
         }
 
         @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .my-queue-label {
@@ -257,8 +299,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
         }
 
         .cancel-btn {
@@ -284,7 +333,10 @@
         /* Modal */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(255, 249, 240, 0.85);
             backdrop-filter: blur(12px);
             display: flex;
@@ -296,8 +348,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .modal-card {
@@ -408,9 +465,13 @@
             padding: 8px 16px;
         }
 
-        .back-btn:hover { color: var(--dark); }
+        .back-btn:hover {
+            color: var(--dark);
+        }
 
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
 
         /* Footer */
         .footer {
@@ -422,6 +483,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Back button -->
@@ -501,7 +563,8 @@
         <div class="modal-card">
             <div class="modal-title">Halo! 👋</div>
             <div class="modal-subtitle">Siapa nama kamu?</div>
-            <input type="text" id="client-name" class="name-input" autocomplete="off" placeholder="Ketik nama kamu..." maxlength="50" style="margin-bottom: 12px;">
+            <input type="text" id="client-name" class="name-input" autocomplete="off" placeholder="Ketik nama kamu..."
+                maxlength="50" style="margin-bottom: 12px;">
             <div class="modal-subtitle" style="margin-bottom: 8px;">Berapa sesi foto?</div>
             <select id="client-sessions" class="name-input" style="margin-bottom: 15px; appearance: none;">
                 <option value="1">1 Sesi</option>
@@ -516,11 +579,11 @@
     <script>
         const loc = window.location.pathname.includes('outdoor') ? 'Youth Center' : 'Studio Utama';
         const evtSource = new EventSource('/api/stream/' + loc);
-        
+
         const badge = document.getElementById('location-badge');
         badge.textContent = loc.toUpperCase();
         badge.classList.add(loc === 'Youth Center' ? 'youth' : 'studio');
-        document.title = `📸 ${loc} - Antrian Photobox`;
+        document.title = `📸 ${loc} - Antrian Monobox`;
 
         let sessionDuration = 7;
         let myQueueId = localStorage.getItem('my_queue_id');
@@ -537,7 +600,7 @@
 
             document.getElementById('est-wait').textContent = `${waitTimeMin}m`;
             document.getElementById('est-time').textContent = `~${estTime}`;
-            
+
             if (stats.max_sessions) {
                 const selectEl = document.getElementById('client-sessions');
                 if (selectEl.options.length !== stats.max_sessions) {
@@ -569,9 +632,9 @@
         }, 500);
 
         evtSource.addEventListener('system_reset', () => {
-             alert('⚠️ Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.');
-             clearMyQueue();
-             window.location.reload();
+            alert('⚠️ Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.');
+            clearMyQueue();
+            window.location.reload();
         });
 
         // Check if we already have queue
@@ -612,7 +675,7 @@
                         }
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     }
-                    
+
                     statusEl.textContent = '🟢 DIPANGGIL!';
                     statusEl.className = 'status-badge status-called';
                     document.getElementById('my-before').textContent = '0';
@@ -708,4 +771,5 @@
         });
     </script>
 </body>
+
 </html>

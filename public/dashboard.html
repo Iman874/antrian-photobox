@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Photobox Server - Admin Dashboard</title>
-    <meta name="description" content="Admin dashboard untuk mengelola antrian photobox">
+    <title>📸 Monobox Server - Admin Dashboard</title>
+    <meta name="description" content="Admin dashboard untuk mengelola antrian Monobox">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         :root {
             --pink: #FF6B9D;
@@ -51,8 +56,15 @@
         }
 
         @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-15px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header-badge {
@@ -66,8 +78,14 @@
             color: white;
             letter-spacing: 1px;
         }
-        .header-badge.studio { background: linear-gradient(135deg, var(--pink), var(--orange)); }
-        .header-badge.youth { background: linear-gradient(135deg, var(--blue), var(--purple)); }
+
+        .header-badge.studio {
+            background: linear-gradient(135deg, var(--pink), var(--orange));
+        }
+
+        .header-badge.youth {
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+        }
 
         .connection-dot {
             width: 10px;
@@ -78,8 +96,15 @@
         }
 
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
         }
 
         .connection-status {
@@ -102,14 +127,32 @@
             animation: fadeInUp 0.4s ease both;
         }
 
-        .section-card:nth-child(2) { animation-delay: 0.1s; }
-        .section-card:nth-child(3) { animation-delay: 0.15s; }
-        .section-card:nth-child(4) { animation-delay: 0.2s; }
-        .section-card:nth-child(5) { animation-delay: 0.25s; }
+        .section-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .section-card:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        .section-card:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+
+        .section-card:nth-child(5) {
+            animation-delay: 0.25s;
+        }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .section-header {
@@ -216,18 +259,22 @@
 
         /* Stats Row */
         .stats-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 0;
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .stat-cell {
             text-align: center;
             padding: 14px;
             border-right: 2px solid #F0F0F0;
+            min-width: 90px;
+            flex: 1 0 auto;
         }
 
-        .stat-cell:last-child { border-right: none; }
+        .stat-cell:last-child {
+            border-right: none;
+        }
 
         .stat-cell .sl {
             font-size: 0.65rem;
@@ -335,6 +382,7 @@
         .recall-btn {
             color: var(--orange);
         }
+
         .recall-btn:hover {
             border-color: var(--orange);
             background: rgba(255, 140, 66, 0.06);
@@ -343,6 +391,7 @@
         .reset-btn {
             color: var(--red);
         }
+
         .reset-btn:hover {
             border-color: var(--red);
             background: rgba(255, 71, 87, 0.06);
@@ -361,7 +410,9 @@
             border-right: 2px solid #F0F0F0;
         }
 
-        .info-cell:last-child { border-right: none; }
+        .info-cell:last-child {
+            border-right: none;
+        }
 
         .info-cell .il {
             font-size: 0.65rem;
@@ -448,6 +499,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Toast notification -->
     <div id="toast" class="toast"></div>
@@ -506,7 +558,8 @@
                 <div class="stat-cell">
                     <div class="sl">Waktu Sesi</div>
                     <div class="duration-wrapper" id="duration-wrapper">
-                        <select class="duration-select" id="duration-select" onchange="updateDuration(parseInt(this.value))">
+                        <select class="duration-select" id="duration-select"
+                            onchange="updateDuration(parseInt(this.value))">
                             <option value="3">3 mnt</option>
                             <option value="4">4 mnt</option>
                             <option value="5">5 mnt</option>
@@ -521,7 +574,8 @@
                 <div class="stat-cell" style="border-right: none;">
                     <div class="sl">Max Sesi</div>
                     <div class="duration-wrapper">
-                        <select class="duration-select" id="max-session-select" onchange="updateMaxSessions(parseInt(this.value))">
+                        <select class="duration-select" id="max-session-select"
+                            onchange="updateMaxSessions(parseInt(this.value))">
                             <option value="1">1 Sesi</option>
                             <option value="2">2 Sesi</option>
                             <option value="3">3 Sesi</option>
@@ -655,7 +709,7 @@
                         bellAudioEl.pause();
                         bellAudioEl.currentTime = 0;
                         bellAudioEl.muted = false;
-                    }).catch(() => {});
+                    }).catch(() => { });
                 }
                 showToast('🔊 Audio diaktifkan!', 'success');
             } else {
@@ -768,7 +822,7 @@
                 await new Promise(r => setTimeout(r, 500));
 
                 // TTS
-                const text = `Nomor antrian ${number} atas nama ${name}, segera ke photobox sekarang`;
+                const text = `Nomor antrian ${number} atas nama ${name}, segera ke Monobox sekarang`;
                 const response = await fetch('/api/tts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -898,4 +952,5 @@
         setInterval(updateClock, 10000);
     </script>
 </body>
+
 </html>

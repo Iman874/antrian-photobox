@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Photobox Server - Display Antrian</title>
-    <meta name="description" content="Display monitor untuk antrian photobox">
+    <title>📸 Monobox Server - Display Antrian</title>
+    <meta name="description" content="Display monitor untuk antrian Monobox">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         :root {
             --pink: #FF6B9D;
@@ -36,14 +41,25 @@
         }
 
         @keyframes bgShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .start-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(255, 249, 240, 0.95);
             backdrop-filter: blur(20px);
             display: flex;
@@ -65,8 +81,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.03); }
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.03);
+            }
         }
 
         .start-card h1 {
@@ -117,9 +140,19 @@
         }
 
         @keyframes bounceIn {
-            0% { transform: scale(0); opacity: 0; }
-            60% { transform: scale(1.08); }
-            100% { transform: scale(1); opacity: 1; }
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.08);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .center-area {
@@ -173,7 +206,9 @@
         }
 
         @keyframes blinker {
-            50% { opacity: 0.3; }
+            50% {
+                opacity: 0.3;
+            }
         }
 
         .bottom-bar {
@@ -235,18 +270,49 @@
             pointer-events: none;
             z-index: 0;
         }
-        .float-deco:nth-child(1) { top: 5%; left: 3%; animation-delay: 0s; }
-        .float-deco:nth-child(2) { top: 8%; right: 5%; animation-delay: 1.5s; }
-        .float-deco:nth-child(3) { bottom: 8%; left: 5%; animation-delay: 3s; }
-        .float-deco:nth-child(4) { bottom: 5%; right: 3%; animation-delay: 4.5s; }
+
+        .float-deco:nth-child(1) {
+            top: 5%;
+            left: 3%;
+            animation-delay: 0s;
+        }
+
+        .float-deco:nth-child(2) {
+            top: 8%;
+            right: 5%;
+            animation-delay: 1.5s;
+        }
+
+        .float-deco:nth-child(3) {
+            bottom: 8%;
+            left: 5%;
+            animation-delay: 3s;
+        }
+
+        .float-deco:nth-child(4) {
+            bottom: 5%;
+            right: 3%;
+            animation-delay: 4.5s;
+        }
 
         @keyframes floatDeco {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            25% { transform: translateY(-20px) rotate(5deg); }
-            75% { transform: translateY(15px) rotate(-5deg); }
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            25% {
+                transform: translateY(-20px) rotate(5deg);
+            }
+
+            75% {
+                transform: translateY(15px) rotate(-5deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <!-- Floating decorations -->
     <div class="float-deco">📸</div>
@@ -366,7 +432,7 @@
                 bellEl.pause();
                 bellEl.currentTime = 0;
                 bellEl.muted = false;
-            }).catch(() => {});
+            }).catch(() => { });
 
             ttsEl.muted = true;
             ttsEl.src = '/bell.mp3';
@@ -375,7 +441,7 @@
                 ttsEl.currentTime = 0;
                 ttsEl.muted = false;
                 ttsEl.src = '';
-            }).catch(() => {});
+            }).catch(() => { });
         }
 
         async function playBellSound() {
@@ -424,7 +490,7 @@
                 await new Promise(r => setTimeout(r, 500));
 
                 // TTS
-                const text = `Nomor antrian ${number} atas nama ${name}, segera ke photobox sekarang`;
+                const text = `Nomor antrian ${number} atas nama ${name}, segera ke Monobox sekarang`;
                 const response = await fetch('/api/tts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -453,4 +519,5 @@
         });
     </script>
 </body>
+
 </html>
