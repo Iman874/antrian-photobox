@@ -32,11 +32,24 @@
     <script>
         const evtSource = new EventSource('/api/stream/All');
 
-        evtSource.addEventListener('update_all_stats', (e) => {
-            const data = JSON.parse(e.data);
+        function updateAllEst(data) {
             updateEst('Studio Utama', data['Studio Utama']);
             updateEst('Youth Center', data['Youth Center']);
+        }
+
+        // SSE: Jalur utama
+        evtSource.addEventListener('update_all_stats', (e) => {
+            updateAllEst(JSON.parse(e.data));
         });
+
+        // FALLBACK POLLING: Paksa update setiap 500ms
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                updateAllEst(data);
+            } catch (e) { /* abaikan */ }
+        }, 500);
 
         function updateEst(loc, stats) {
             const waiting = stats ? (stats.waiting || 0) : 0;

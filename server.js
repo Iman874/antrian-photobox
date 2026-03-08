@@ -7,6 +7,7 @@ const googleTTS = require('google-tts-api');
 
 const app = express();
 const server = http.createServer(app);
+const falback = 500;
 
 app.use(cors());
 app.use(express.json());
@@ -100,16 +101,18 @@ setInterval(() => {
 // Endpoint Pendaftaran/Stream SSE
 app.get('/api/stream/:location', (req, res) => {
     const location = req.params.location;
-    
+
     // Headers wajib untuk Server-Sent Events (SSE)
+    // X-Accel-Buffering: no → mencegah LiteSpeed/Nginx mem-buffer response
     res.set({
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no'
     });
-    
-    // Kirim byte kosong untuk inisialisasi awal
-    res.flushHeaders && res.flushHeaders();
+
+    // Flush headers segera
+    res.flushHeaders();
 
     // Daftarkan klien baru ke dalam array
     const newClient = { id: Date.now(), location, res };

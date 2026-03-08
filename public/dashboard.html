@@ -675,12 +675,10 @@
         const durationSelect = document.getElementById('duration-select');
         durationSelect.value = currentDuration;
 
-        evtSource.addEventListener('update_stats', (e) => {
-            const stats = JSON.parse(e.data);
-            
+        function updateDashboardStats(stats) {
             // Update currently serving
             const servingEl = document.getElementById('now-serving');
-            const nameEl = document.getElementById('now-serving-name'); // Keep original ID
+            const nameEl = document.getElementById('now-serving-name');
 
             if (stats.nowServing) {
                 if (servingEl.textContent !== stats.nowServing.queue_number) {
@@ -699,7 +697,21 @@
                 document.getElementById('max-session-select').value = stats.max_sessions;
             }
             document.getElementById('est-session').textContent = `~${currentDuration} min`;
+        }
+
+        // SSE: Jalur utama
+        evtSource.addEventListener('update_stats', (e) => {
+            updateDashboardStats(JSON.parse(e.data));
         });
+
+        // FALLBACK POLLING: Paksa update setiap 500ms
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/stats/' + encodeURIComponent(loc));
+                const stats = await res.json();
+                updateDashboardStats(stats);
+            } catch (e) { /* abaikan */ }
+        }, 500);
 
         evtSource.addEventListener('play_audio', (e) => {
             if (!audioEnabled) return;

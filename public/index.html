@@ -341,8 +341,7 @@
     <script>
         const evtSource = new EventSource('/api/stream/All');
 
-        evtSource.addEventListener('update_all_stats', (e) => {
-            const data = JSON.parse(e.data);
+        function updateAllStats(data) {
             const studio = data['Studio Utama'];
             const youth = data['Youth Center'];
 
@@ -351,7 +350,21 @@
 
             document.getElementById('youth-waiting').textContent = youth.waiting;
             document.getElementById('youth-est').textContent = `~${youth.waiting * youth.session_duration}m`;
+        }
+
+        // SSE: Jalur utama
+        evtSource.addEventListener('update_all_stats', (e) => {
+            updateAllStats(JSON.parse(e.data));
         });
+
+        // FALLBACK POLLING: Paksa update setiap 500ms
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                updateAllStats(data);
+            } catch (e) { /* abaikan */ }
+        }, 500);
     </script>
 </body>
 </html>

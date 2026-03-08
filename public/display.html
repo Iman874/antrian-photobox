@@ -301,8 +301,7 @@
         badge.textContent = loc.toUpperCase();
         badge.classList.add(loc === 'Youth Center' ? 'youth' : 'studio');
 
-        evtSource.addEventListener('update_stats', (e) => {
-            const stats = JSON.parse(e.data);
+        function updateStats(stats) {
             const numEl = document.getElementById('now-serving');
             const nameEl = document.getElementById('now-serving-name');
 
@@ -319,7 +318,21 @@
             }
 
             document.getElementById('waiting-count').textContent = stats.waiting + ' Orang';
+        }
+
+        // SSE: Jalur utama
+        evtSource.addEventListener('update_stats', (e) => {
+            updateStats(JSON.parse(e.data));
         });
+
+        // FALLBACK POLLING: Paksa update setiap 500ms
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/stats/' + encodeURIComponent(loc));
+                const stats = await res.json();
+                updateStats(stats);
+            } catch (e) { /* abaikan */ }
+        }, 500);
 
         // iOS Safari compatible audio system
         let audioCtx = null;
