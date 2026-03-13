@@ -212,12 +212,13 @@ app.post('/api/queue', async (req, res) => {
             }
         }
 
-        // Hitung nomor antrian berikutnya (hanya yang non-cancelled)
-        const [activeCount] = await pool.query(
-            "SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ? AND status != 'cancelled' AND DATE(created_at) = CURDATE()",
+        // Hitung nomor antrian berikutnya (gunakan nomor tertinggi hari ini, bukan jumlah aktif)
+        // Ini memastikan jika ada yang dicancel, nomor berikutnya tetap maju (tidak mengulang nomor yang dicancel)
+        const [maxNum] = await pool.query(
+            "SELECT MAX(CAST(queue_number AS UNSIGNED)) as max_num FROM queues WHERE studio_location = ? AND DATE(created_at) = CURDATE()",
             [studio_location]
         );
-        const nextNum = (activeCount[0].cnt + 1).toString().padStart(2, '0');
+        const nextNum = ((maxNum[0].max_num || 0) + 1).toString().padStart(2, '0');
         const [result] = await pool.query(
             'INSERT INTO queues (name, queue_number, studio_location, sessions, device_id) VALUES (?, ?, ?, ?, ?)',
             [name, nextNum, studio_location, sessions, device_id || null]
