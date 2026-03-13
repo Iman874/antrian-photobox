@@ -713,7 +713,11 @@
                     <div class="iv" id="current-time">--:--</div>
                 </div>
                 <div class="info-cell">
-                    <div class="il">Est. Sesi</div>
+                    <div class="il">Est. Selesai</div>
+                    <div class="iv" id="est-completion" style="color: var(--blue);">--:--</div>
+                </div>
+                <div class="info-cell">
+                    <div class="il">Durasi Sesi</div>
                     <div class="iv" id="est-session">~7 min</div>
                 </div>
             </div>
@@ -867,6 +871,12 @@
             currentDuration = stats.session_duration;
             durationSelect.value = currentDuration;
             document.getElementById('est-session').textContent = `~${currentDuration} min`;
+
+            // Calculate estimated completion
+            const waitingSessions = stats.waiting_sessions || 0;
+            const servingSessions = stats.nowServing ? (stats.nowServing.sessions || 1) : 0;
+            window.latestEstMinutes = (waitingSessions + servingSessions) * currentDuration;
+            if (typeof updateCompletionTime === 'function') updateCompletionTime();
 
             // Update tombol "PANGGIL SELANJUTNYA"
             const btnWaiting = document.getElementById('btn-waiting-count');
@@ -1106,6 +1116,18 @@
             setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
+        function updateCompletionTime(now = new Date()) {
+            const estMinutes = window.latestEstMinutes || 0;
+            if (estMinutes === 0) {
+                document.getElementById('est-completion').textContent = '--:--';
+                return;
+            }
+            const completionTime = new Date(now.getTime() + estMinutes * 60000);
+            const ch = completionTime.getHours().toString().padStart(2, '0');
+            const cm = completionTime.getMinutes().toString().padStart(2, '0');
+            document.getElementById('est-completion').textContent = `~${ch}:${cm}`;
+        }
+
         // Clock - update setiap detik dengan format HH:MM:SS
         function updateClock() {
             const now = new Date();
@@ -1113,6 +1135,7 @@
             const m = now.getMinutes().toString().padStart(2, '0');
             const s = now.getSeconds().toString().padStart(2, '0');
             document.getElementById('current-time').textContent = `${h}:${m}:${s}`;
+            updateCompletionTime(now);
         }
         updateClock();
         setInterval(updateClock, 1000);
