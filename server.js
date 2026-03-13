@@ -176,7 +176,29 @@ app.get('/api/stats', async (req, res) => {
 app.post('/api/queue', async (req, res) => {
     const { name, studio_location, sessions = 1, device_id } = req.body;
     try {
-        // Cek apakah device_id sudah punya antrian aktif di lokasi manapun
+        // 1. Cek apakah nama ini persis sudah punya antrian aktif hari ini (Auto-Recovery by Name)
+        // Ini mencegah double antrian kalau user kerefresh/close app dan cache hilang, lalu daftar lagi
+        const [sameName] = await pool.query(
+            "SELECT * FROM queues WHERE LOWER(name) = LOWER(?) AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE() ORDER BY id DESC LIMIT 1",
+            [name]
+        );
+        
+        if (sameName.length > 0) {
+            // Re-link device_id baru ke antrian lama jika berubah (karena cache hilang)
+            if (device_id && sameName[0].device_id !== device_id) {
+                await pool.query("UPDATE queues SET device_id = ? WHERE id = ?", [device_id, sameName[0].id]);
+            }
+            return res.json({ 
+                success: true, 
+                id: sameName[0].id, 
+                name: sameName[0].name, 
+                queue_number: sameName[0].queue_number, 
+                studio_location: sameName[0].studio_location,
+                recovered: true 
+            });
+        }
+
+        // 2. Cek apakah device_id sudah punya antrian aktif di lokasi manapun
         if (device_id) {
             const [existing] = await pool.query(
                 "SELECT id, studio_location FROM queues WHERE device_id = ? AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE()",

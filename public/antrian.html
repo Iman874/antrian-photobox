@@ -593,7 +593,9 @@
         // Generate atau ambil device_id unik per browser
         let deviceId = localStorage.getItem('monobox_device_id');
         if (!deviceId) {
-            deviceId = crypto.randomUUID();
+            deviceId = (window.crypto && window.crypto.randomUUID) 
+                ? window.crypto.randomUUID() 
+                : 'dev_' + Date.now().toString(36) + Math.random().toString(36).substring(2);
             localStorage.setItem('monobox_device_id', deviceId);
         }
 
@@ -775,9 +777,13 @@
                     return;
                 }
 
+                if (data.recovered) {
+                    alert(`⚠️ Halo ${data.name}! Kamu sudah memiliki antrian aktif (Nomor ${data.queue_number}). Kami me-restore layar antrianmu kembali.`);
+                }
+
                 myQueueId = data.id;
-                myQueueName = name;
-                myQueueLocation = loc;
+                myQueueName = data.name;
+                myQueueLocation = data.studio_location;
                 localStorage.setItem('my_queue_id', myQueueId);
                 localStorage.setItem('my_queue_name', myQueueName);
                 localStorage.setItem('my_queue_location', loc);
