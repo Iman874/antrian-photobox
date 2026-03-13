@@ -362,6 +362,23 @@ app.get('/api/queue/list/:location', async (req, res) => {
     }
 });
 
+// Check if device already has an active queue (untuk restore state setelah page restart)
+app.get('/api/queue/device/:device_id', async (req, res) => {
+    try {
+        const [queues] = await pool.query(
+            "SELECT * FROM queues WHERE device_id = ? AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE() ORDER BY id DESC LIMIT 1",
+            [req.params.device_id]
+        );
+        if (queues.length > 0) {
+            res.json({ found: true, queue: queues[0] });
+        } else {
+            res.json({ found: false });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Get client queue position and estimation
 app.get('/api/queue/:id', async (req, res) => {
     try {

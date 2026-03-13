@@ -597,11 +597,51 @@
             localStorage.setItem('monobox_device_id', deviceId);
         }
 
-        // Cek apakah sudah punya antrian di lokasi lain
-        if (myQueueId && myQueueLocation && myQueueLocation !== loc) {
-            alert(`⚠️ Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
-            window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+        // Check if we already have queue (dari localStorage atau recovery dari server)
+        async function initQueueState() {
+            if (myQueueId) {
+                // Sudah ada di localStorage, cek apakah masih valid
+                if (myQueueLocation && myQueueLocation !== loc) {
+                    alert(`⚠️ Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
+                    window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+                    return;
+                }
+                document.getElementById('take-queue-section').classList.add('hidden');
+                document.getElementById('my-queue-section').classList.remove('hidden');
+                checkMyQueue();
+            } else {
+                // localStorage kosong (mungkin di-clear saat app ditutup)
+                // Coba recovery dari server pakai device_id
+                try {
+                    const res = await fetch(`/api/queue/device/${deviceId}`);
+                    const data = await res.json();
+                    if (data.found) {
+                        const q = data.queue;
+                        // Restore state dari server
+                        myQueueId = q.id;
+                        myQueueName = q.name;
+                        myQueueLocation = q.studio_location;
+                        localStorage.setItem('my_queue_id', myQueueId);
+                        localStorage.setItem('my_queue_name', myQueueName);
+                        localStorage.setItem('my_queue_location', myQueueLocation);
+
+                        // Cek apakah antrian di lokasi lain
+                        if (myQueueLocation !== loc) {
+                            alert(`⚠️ Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
+                            window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+                            return;
+                        }
+
+                        document.getElementById('take-queue-section').classList.add('hidden');
+                        document.getElementById('my-queue-section').classList.remove('hidden');
+                        checkMyQueue();
+                    }
+                } catch (e) {
+                    console.warn('Device recovery check failed:', e);
+                }
+            }
         }
+        initQueueState();
 
         // Fungsi utama untuk memperbarui tampilan statistik
         function updateStats(stats) {
@@ -650,13 +690,6 @@
             clearMyQueue();
             window.location.reload();
         });
-
-        // Check if we already have queue
-        if (myQueueId) {
-            document.getElementById('take-queue-section').classList.add('hidden');
-            document.getElementById('my-queue-section').classList.remove('hidden');
-            checkMyQueue();
-        }
 
         async function checkMyQueue() {
             if (!myQueueId) return;
