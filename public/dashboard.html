@@ -497,6 +497,107 @@
             color: white;
             box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
         }
+
+        /* Queue List */
+        .queue-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 2px solid #F5F5F5;
+            transition: background 0.2s;
+        }
+
+        .queue-item:last-child {
+            border-bottom: none;
+        }
+
+        .queue-item:hover {
+            background: #FAFAFA;
+        }
+
+        .queue-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .queue-item-num {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .queue-item-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .queue-item-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--dark);
+        }
+
+        .queue-item-meta {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #bbb;
+        }
+
+        .queue-item-status {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .queue-item-status.waiting {
+            background: rgba(255, 140, 66, 0.12);
+            color: var(--orange);
+        }
+
+        .queue-item-status.called {
+            background: rgba(6, 214, 160, 0.12);
+            color: var(--green);
+        }
+
+        .queue-cancel-btn {
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 2px solid #E0E0E0;
+            background: white;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+
+        .queue-cancel-btn:hover {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(255, 71, 87, 0.05);
+        }
+
+        .queue-empty {
+            text-align: center;
+            padding: 24px;
+            color: #ccc;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 
@@ -632,6 +733,17 @@
             </div>
         </div>
 
+        <!-- 05 Daftar Antrian -->
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-num">05</span>
+                <span class="section-title">DAFTAR ANTRIAN</span>
+            </div>
+            <div class="queue-list" id="queue-list">
+                <div class="queue-empty">Belum ada antrian 📋</div>
+            </div>
+        </div>
+
         <!-- Footer -->
         <div class="footer">
             <span id="footer-loc">STUDIO UTAMA</span> • MONODEV 2026
@@ -759,6 +871,38 @@
             // Update tombol "PANGGIL SELANJUTNYA"
             const btnWaiting = document.getElementById('btn-waiting-count');
             if (btnWaiting) btnWaiting.textContent = stats.waiting;
+
+            // Update daftar antrian
+            renderQueueList(stats.queue_list || []);
+        }
+
+        function renderQueueList(list) {
+            const container = document.getElementById('queue-list');
+            if (!list || list.length === 0) {
+                container.innerHTML = '<div class="queue-empty">Belum ada antrian 📋</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(q => {
+                const statusClass = q.status === 'called' ? 'called' : 'waiting';
+                const statusText = q.status === 'called' ? '🟢 DIPANGGIL' : '⏳ MENUNGGU';
+                const cancelBtn = q.status === 'waiting'
+                    ? `<button class="queue-cancel-btn" onclick="adminCancelQueue(${q.id})">✕</button>`
+                    : '';
+                return `
+                    <div class="queue-item">
+                        <div class="queue-item-info">
+                            <div class="queue-item-num">${q.queue_number}</div>
+                            <div class="queue-item-details">
+                                <div class="queue-item-name">${q.name}</div>
+                                <div class="queue-item-meta">${q.sessions} Sesi</div>
+                            </div>
+                        </div>
+                        <span class="queue-item-status ${statusClass}">${statusText}</span>
+                        ${cancelBtn}
+                    </div>
+                `;
+            }).join('');
         }
 
         // SSE: Jalur utama
@@ -901,9 +1045,30 @@
                     document.getElementById('waiting-count').textContent = '0';
                     document.getElementById('btn-waiting-count').textContent = '0';
                     document.getElementById('total-count').textContent = '0';
+                    renderQueueList([]);
                     showToast('✅ Sistem berhasil di-reset!', 'success');
                 } else {
                     showToast('❌ Gagal mereset sistem', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('❌ Error koneksi', 'error');
+            }
+        }
+
+        async function adminCancelQueue(id) {
+            if (!confirm('Yakin ingin membatalkan antrian ini?')) return;
+            try {
+                const res = await fetch('/api/admin/cancel_queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, studio_location: loc })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('✅ Antrian dibatalkan', 'success');
+                } else {
+                    showToast('❌ Gagal membatalkan antrian', 'error');
                 }
             } catch (e) {
                 console.error(e);
@@ -941,15 +1106,16 @@
             setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
-        // Clock
+        // Clock - update setiap detik dengan format HH:MM:SS
         function updateClock() {
             const now = new Date();
             const h = now.getHours().toString().padStart(2, '0');
             const m = now.getMinutes().toString().padStart(2, '0');
-            document.getElementById('current-time').textContent = `${h}:${m}`;
+            const s = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('current-time').textContent = `${h}:${m}:${s}`;
         }
         updateClock();
-        setInterval(updateClock, 10000);
+        setInterval(updateClock, 1000);
     </script>
 </body>
 

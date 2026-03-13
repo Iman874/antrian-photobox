@@ -588,6 +588,20 @@
         let sessionDuration = 7;
         let myQueueId = localStorage.getItem('my_queue_id');
         let myQueueName = localStorage.getItem('my_queue_name');
+        let myQueueLocation = localStorage.getItem('my_queue_location');
+
+        // Generate atau ambil device_id unik per browser
+        let deviceId = localStorage.getItem('monobox_device_id');
+        if (!deviceId) {
+            deviceId = crypto.randomUUID();
+            localStorage.setItem('monobox_device_id', deviceId);
+        }
+
+        // Cek apakah sudah punya antrian di lokasi lain
+        if (myQueueId && myQueueLocation && myQueueLocation !== loc) {
+            alert(`⚠️ Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
+            window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+        }
 
         // Fungsi utama untuk memperbarui tampilan statistik
         function updateStats(stats) {
@@ -718,13 +732,22 @@
                 const res = await fetch('/api/queue', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, studio_location: loc, sessions })
+                    body: JSON.stringify({ name, studio_location: loc, sessions, device_id: deviceId })
                 });
                 const data = await res.json();
+
+                // Cek apakah server menolak (device sudah punya antrian)
+                if (data.success === false) {
+                    alert(`⚠️ ${data.message}`);
+                    return;
+                }
+
                 myQueueId = data.id;
                 myQueueName = name;
+                myQueueLocation = loc;
                 localStorage.setItem('my_queue_id', myQueueId);
                 localStorage.setItem('my_queue_name', myQueueName);
+                localStorage.setItem('my_queue_location', loc);
 
                 closeModal();
                 document.getElementById('take-queue-section').classList.add('hidden');
@@ -759,8 +782,10 @@
         function clearMyQueue() {
             myQueueId = null;
             myQueueName = null;
+            myQueueLocation = null;
             localStorage.removeItem('my_queue_id');
             localStorage.removeItem('my_queue_name');
+            localStorage.removeItem('my_queue_location');
             document.getElementById('take-queue-section').classList.remove('hidden');
             document.getElementById('my-queue-section').classList.add('hidden');
         }

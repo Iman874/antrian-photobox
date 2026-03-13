@@ -34,9 +34,17 @@ async function initDB() {
             studio_location VARCHAR(255) NOT NULL,
             status ENUM('waiting', 'called', 'done', 'cancelled') DEFAULT 'waiting',
             sessions INT DEFAULT 1,
+            device_id VARCHAR(64) DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     `);
+
+    // Add device_id column if not exists (for existing tables)
+    try {
+        await pool.query(`ALTER TABLE queues ADD COLUMN device_id VARCHAR(64) DEFAULT NULL`);
+    } catch (e) {
+        // Column already exists, ignore
+    }
 
     await pool.query(`
         CREATE TABLE IF NOT EXISTS settings (

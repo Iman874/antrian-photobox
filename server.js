@@ -55,13 +55,20 @@ async function getStats(location) {
     const [nowServing] = await pool.query("SELECT * FROM queues WHERE studio_location = ? AND status = 'called' ORDER BY id DESC LIMIT 1", [location]);
     const [settings] = await pool.query('SELECT * FROM settings WHERE studio_location = ?', [location]);
 
+    // Ambil daftar antrian aktif (waiting + called) hari ini
+    const [queueList] = await pool.query(
+        "SELECT id, name, queue_number, sessions, status, created_at FROM queues WHERE studio_location = ? AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE() ORDER BY id ASC",
+        [location]
+    );
+
     return {
         waiting: waiting[0].cnt,
         waiting_sessions: parseInt(waiting[0].total_sessions),
         total: total[0].cnt,
         nowServing: nowServing.length > 0 ? nowServing[0] : null,
         session_duration: settings.length > 0 ? settings[0].session_duration : 7,
-        max_sessions: settings.length > 0 ? settings[0].max_sessions : 2
+        max_sessions: settings.length > 0 ? settings[0].max_sessions : 2,
+        queue_list: queueList
     };
 }
 
@@ -167,25 +174,89 @@ app.get('/api/stats', async (req, res) => {
 
 // Take a queue number
 app.post('/api/queue', async (req, res) => {
-    const { name, studio_location, sessions = 1 } = req.body;
+    const { name, studio_location, sessions = 1, device_id } = req.body;
     try {
-        const [todayCount] = await pool.query('SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ? AND DATE(created_at) = CURDATE()', [studio_location]);
-        const nextNum = (todayCount[0].cnt + 1).toString().padStart(2, '0');
-        const [result] = await pool.query('INSERT INTO queues (name, queue_number, studio_location, sessions) VALUES (?, ?, ?, ?)', [name, nextNum, studio_location, sessions]);
+        // Cek apakah device_id sudah punya antrian aktif di lokasi manapun
+        if (device_id) {
+            const [existing] = await pool.query(
+                "SELECT id, studio_location FROM queues WHERE device_id = ? AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE()",
+                [device_id]
+            );
+            if (existing.length > 0) {
+                return res.json({
+                    success: false,
+                    message: `Kamu sudah punya antrian aktif di ${existing[0].studio_location}. Selesaikan atau batalkan dulu ya! 😊`
+                });
+            }
+        }
+
+        // Hitung nomor antrian berikutnya (hanya yang non-cancelled)
+        const [activeCount] = await pool.query(
+            "SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ? AND status != 'cancelled' AND DATE(created_at) = CURDATE()",
+            [studio_location]
+        );
+        const nextNum = (activeCount[0].cnt + 1).toString().padStart(2, '0');
+        const [result] = await pool.query(
+            'INSERT INTO queues (name, queue_number, studio_location, sessions, device_id) VALUES (?, ?, ?, ?, ?)',
+            [name, nextNum, studio_location, sessions, device_id || null]
+        );
 
         await broadcastAll(studio_location);
 
-        res.json({ id: result.insertId, name, queue_number: nextNum, studio_location });
+        res.json({ success: true, id: result.insertId, name, queue_number: nextNum, studio_location });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
+
+// Helper: Re-number antrian yang masih waiting setelah cancel
+async function renumberQueue(studio_location) {
+    // Hitung berapa yang sudah called/done hari ini (nomor mereka tetap)
+    const [doneCount] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ? AND status IN ('called', 'done') AND DATE(created_at) = CURDATE()",
+        [studio_location]
+    );
+    const startNum = doneCount[0].cnt + 1;
+
+    // Ambil semua yang masih waiting, urutkan berdasarkan id
+    const [waitingQueues] = await pool.query(
+        "SELECT id FROM queues WHERE studio_location = ? AND status = 'waiting' AND DATE(created_at) = CURDATE() ORDER BY id ASC",
+        [studio_location]
+    );
+
+    // Re-assign nomor antrian secara berurutan
+    for (let i = 0; i < waitingQueues.length; i++) {
+        const newNum = (startNum + i).toString().padStart(2, '0');
+        await pool.query('UPDATE queues SET queue_number = ? WHERE id = ?', [newNum, waitingQueues[i].id]);
+    }
+}
 
 // Cancel a queue number
 app.post('/api/queue/cancel', async (req, res) => {
     const { id, studio_location } = req.body;
     try {
         await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['cancelled', id]);
+
+        // Re-number antrian yang tersisa
+        await renumberQueue(studio_location);
+
+        await broadcastAll(studio_location);
+
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Admin cancel a specific queue entry
+app.post('/api/admin/cancel_queue', async (req, res) => {
+    const { id, studio_location } = req.body;
+    try {
+        await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['cancelled', id]);
+
+        // Re-number antrian yang tersisa
+        await renumberQueue(studio_location);
+
         await broadcastAll(studio_location);
 
         res.json({ success: true });
@@ -272,6 +343,20 @@ app.post('/api/admin/reset', async (req, res) => {
         await broadcastAll(studio_location);
 
         res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Get queue list for a location (active only)
+app.get('/api/queue/list/:location', async (req, res) => {
+    try {
+        const location = req.params.location;
+        const [queues] = await pool.query(
+            "SELECT id, name, queue_number, sessions, status, created_at FROM queues WHERE studio_location = ? AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE() ORDER BY id ASC",
+            [location]
+        );
+        res.json(queues);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
