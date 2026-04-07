@@ -235,36 +235,13 @@ app.post('/api/queue', async (req, res) => {
     }
 });
 
-// Helper: Re-number antrian yang masih waiting setelah cancel
-async function renumberQueue(studio_location) {
-    // Hitung berapa yang sudah called/done hari ini (nomor mereka tetap)
-    const [doneCount] = await pool.query(
-        "SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ? AND status IN ('called', 'done') AND DATE(created_at) = CURDATE()",
-        [studio_location]
-    );
-    const startNum = doneCount[0].cnt + 1;
 
-    // Ambil semua yang masih waiting, urutkan berdasarkan id
-    const [waitingQueues] = await pool.query(
-        "SELECT id FROM queues WHERE studio_location = ? AND status = 'waiting' AND DATE(created_at) = CURDATE() ORDER BY id ASC",
-        [studio_location]
-    );
-
-    // Re-assign nomor antrian secara berurutan
-    for (let i = 0; i < waitingQueues.length; i++) {
-        const newNum = (startNum + i).toString().padStart(2, '0');
-        await pool.query('UPDATE queues SET queue_number = ? WHERE id = ?', [newNum, waitingQueues[i].id]);
-    }
-}
 
 // Cancel a queue number
 app.post('/api/queue/cancel', async (req, res) => {
     const { id, studio_location } = req.body;
     try {
         await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['cancelled', id]);
-
-        // Re-number antrian yang tersisa
-        await renumberQueue(studio_location);
 
         await broadcastAll(studio_location);
 
@@ -279,9 +256,6 @@ app.post('/api/admin/cancel_queue', async (req, res) => {
     const { id, studio_location } = req.body;
     try {
         await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['cancelled', id]);
-
-        // Re-number antrian yang tersisa
-        await renumberQueue(studio_location);
 
         await broadcastAll(studio_location);
 
