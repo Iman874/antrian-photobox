@@ -176,25 +176,28 @@ app.get('/api/stats', async (req, res) => {
 app.post('/api/queue', async (req, res) => {
     const { name, studio_location, sessions = 1, device_id } = req.body;
     try {
-        // 1. Cek apakah nama ini persis sudah punya antrian aktif hari ini (Auto-Recovery by Name)
-        // Ini mencegah double antrian kalau user kerefresh/close app dan cache hilang, lalu daftar lagi
+        // 1. Cek apakah nama ini sudah dipakai di antrian aktif hari ini
         const [sameName] = await pool.query(
             "SELECT * FROM queues WHERE LOWER(name) = LOWER(?) AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE() ORDER BY id DESC LIMIT 1",
             [name]
         );
-        
+
         if (sameName.length > 0) {
-            // Re-link device_id baru ke antrian lama jika berubah (karena cache hilang)
-            if (device_id && sameName[0].device_id !== device_id) {
-                await pool.query("UPDATE queues SET device_id = ? WHERE id = ?", [device_id, sameName[0].id]);
+            // Jika dari device yang sama → recovery (user refresh/close browser lalu buka lagi)
+            if (device_id && sameName[0].device_id === device_id) {
+                return res.json({
+                    success: true,
+                    id: sameName[0].id,
+                    name: sameName[0].name,
+                    queue_number: sameName[0].queue_number,
+                    studio_location: sameName[0].studio_location,
+                    recovered: true
+                });
             }
-            return res.json({ 
-                success: true, 
-                id: sameName[0].id, 
-                name: sameName[0].name, 
-                queue_number: sameName[0].queue_number, 
-                studio_location: sameName[0].studio_location,
-                recovered: true 
+            // Jika dari device berbeda → tolak, nama sudah dipakai orang lain
+            return res.json({
+                success: false,
+                message: `Nama "${sameName[0].name}" sudah digunakan di antrian. Gunakan nama lain ya!`
             });
         }
 

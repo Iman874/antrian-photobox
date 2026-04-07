@@ -1,10 +1,29 @@
 const mysql = require('mysql2/promise');
 
+// ============================================================
+// Konfigurasi Database Otomatis (Lokal & cPanel)
+// ------------------------------------------------------------
+// Cara kerja:
+//   - Di LOKAL   : langsung `node server.js` (default localhost)
+//   - Di cPANEL  : set env variable di hosting, contoh:
+//                   NODE_ENV=production node server.js
+//     atau set DB_HOST, DB_USER, DB_PASS, DB_NAME satu per satu
+// ============================================================
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const dbConfig = {
+    host: process.env.DB_HOST || (isProduction ? 'localhost' : 'localhost'),
+    user: process.env.DB_USER || (isProduction ? 'monf3757_antrian_photobox' : 'root'),
+    password: process.env.DB_PASS || (isProduction ? 'I({x^OF]?-dzUi9S' : ''),
+    database: process.env.DB_NAME || (isProduction ? 'monf3757_antrian_photobox' : 'antrian_photobox'),
+};
+
+console.log(`[DB] Mode: ${isProduction ? 'PRODUCTION (cPanel)' : 'LOCAL (Development)'}`);
+console.log(`[DB] Host: ${dbConfig.host} | Database: ${dbConfig.database}`);
+
 const pool = mysql.createPool({
-    host: 'antrian.photobox.monoframe.id',
-    user: 'monf3757_antrian_photobox',
-    password: 'I({x^OF]?-dzUi9S',
-    database: 'monf3757_antrian_photobox',
+    ...dbConfig,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
