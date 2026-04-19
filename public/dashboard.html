@@ -967,6 +967,13 @@
             }
         }
 
+        function toTitleCase(str) {
+            if (!str) return '';
+            return str.toLowerCase().split(/\s+/).map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
         async function playChimeAndSpeak(number, name) {
             try {
                 // Play bell
@@ -975,8 +982,8 @@
                 // Small pause after bell
                 await new Promise(r => setTimeout(r, 500));
 
-                // TTS
-                const text = `Nomor antrian ${number} atas nama ${name}, segera ke Monobox sekarang`;
+                // TTS - Convert name to Title Case for proper pronunciation
+                const text = `Nomor antrian ${number} atas nama ${toTitleCase(name)}, segera ke Monobox sekarang`;
                 const response = await fetch('/api/tts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
