@@ -1,5 +1,5 @@
-// Load environment variables via custom loader
-require('./load-env.js');
+// Load environment variables
+require('dotenv').config();
 const mysql = require('mysql2/promise');
 
 const isProduction = process.env.NODE_ENV === 'production';
