@@ -1,8 +1,9 @@
 {
   "name": "website-antrian-photobox",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,8 +12,13 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.6",
+    "dotenv": "^16.3.1",
     "express": "^5.2.1",
     "google-tts-api": "^2.0.2",
     "mysql2": "^3.19.0"
+  },
+  "devDependencies": {
+    "axios": "^1.16.1",
+    "pm2": "^7.0.1"
   }
 }

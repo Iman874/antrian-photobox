@@ -1,22 +1,14 @@
+// Load environment variables via custom loader
+require('./load-env.js');
 const mysql = require('mysql2/promise');
-
-// ============================================================
-// Konfigurasi Database Otomatis (Lokal & cPanel)
-// ------------------------------------------------------------
-// Cara kerja:
-//   - Di LOKAL   : langsung `node server.js` (default localhost)
-//   - Di cPANEL  : set env variable di hosting, contoh:
-//                   NODE_ENV=production node server.js
-//     atau set DB_HOST, DB_USER, DB_PASS, DB_NAME satu per satu
-// ============================================================
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 const dbConfig = {
-    host: process.env.DB_HOST || (isProduction ? 'localhost' : 'localhost'),
-    user: process.env.DB_USER || (isProduction ? 'monf3757_antrian_photobox' : 'root'),
-    password: process.env.DB_PASS || (isProduction ? 'I({x^OF]?-dzUi9S' : ''),
-    database: process.env.DB_NAME || (isProduction ? 'monf3757_antrian_photobox' : 'antrian_photobox'),
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASS || '',
+    database: process.env.DB_NAME || 'antrian_photobox',
 };
 
 console.log(`[DB] Mode: ${isProduction ? 'PRODUCTION (cPanel)' : 'LOCAL (Development)'}`);
@@ -30,9 +22,22 @@ const pool = mysql.createPool({
 });
 
 async function initDB() {
-    // Pada cPanel, database sudah dibuat manual, jadi query CREATE DATABASE dihilangkan
-    // untuk mencegah error "Access Denied" karena user cPanel biasa tidak memiliki
-    // permission untuk membuat database baru via query.
+    // 1. Otomatis buat database jika belum ada (berguna untuk pengembangan lokal)
+    try {
+        console.log(`[DB] Memeriksa apakah database "${dbConfig.database}" sudah ada...`);
+        const tempConn = await mysql.createConnection({
+            host: dbConfig.host,
+            user: dbConfig.user,
+            password: dbConfig.password
+        });
+        await tempConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\``);
+        await tempConn.end();
+        console.log(`[DB] Database "${dbConfig.database}" siap/berhasil dibuat.`);
+    } catch (err) {
+        // Abaikan error "Access Denied" (biasanya terjadi di cPanel karena hak akses user terbatas)
+        // karena di cPanel database biasanya sudah dibuat secara manual sebelumnya.
+        console.log(`[DB] Info: Melewati auto-create database (kemungkinan berjalan di cPanel/user terbatas): ${err.message}`);
+    }
 
     // Now create tables
     await pool.query(`

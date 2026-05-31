@@ -1,4 +1,0 @@
-Memulai End-to-End System Testing...
-
---- Menyiapkan sistem (Reset) ---
-❌ PENGUJIAN GAGAL! 

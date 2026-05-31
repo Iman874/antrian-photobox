@@ -4,7 +4,7 @@ const assert = require('assert');
 const BASE_URL = 'http://localhost:3000/api';
 
 async function runTests() {
-    console.log("Memulai End-to-End System Testing...");
+    console.log("Memulai End-to-End System Testing di folder test/...");
     const STUDIO_1 = 'Studio Utama';
     const STUDIO_2 = 'Youth Center';
 
@@ -29,7 +29,9 @@ async function runTests() {
         for (let i = 0; i < names.length; i++) {
             const res = await axios.post(`${BASE_URL}/queue`, { name: names[i], studio_location: STUDIO_1 });
             clients.push(res.data);
-            assert.strictEqual(res.data.queue_number, `A${String(i+1).padStart(3, '0')}`);
+            // Format antrian di server adalah 2 digit tanpa prefix huruf (misal: '01', '02')
+            const expectedQueueNum = String(i + 1).padStart(2, '0');
+            assert.strictEqual(res.data.queue_number, expectedQueueNum);
         }
         
         stats1 = (await axios.get(`${BASE_URL}/stats/${STUDIO_1}`)).data;
@@ -46,18 +48,18 @@ async function runTests() {
         // SCENARIO 3 & 4: ADMIN MEMANGGIL ANTRIAN (CALL NEXT)
         console.log("\n--- Skenario 3 & 4: Admin Call Next ---");
         let callRes = await axios.post(`${BASE_URL}/admin/call_next`, { studio_location: STUDIO_1 });
-        assert.strictEqual(callRes.data.called.queue_number, 'A001');
+        assert.strictEqual(callRes.data.called.queue_number, '01');
         
         stats1 = (await axios.get(`${BASE_URL}/stats/${STUDIO_1}`)).data;
         assert.strictEqual(stats1.waiting, 9);
-        assert.strictEqual(stats1.nowServing.queue_number, 'A001');
+        assert.strictEqual(stats1.nowServing.queue_number, '01');
         console.log(`✅ Call Next 1: Now Serving = ${stats1.nowServing.queue_number}, Waiting = ${stats1.waiting}`);
 
         // SCENARIO 5: RECALL SIGNAL
         console.log("\n--- Skenario 5: Recall Signal ---");
         let recallRes = await axios.post(`${BASE_URL}/admin/recall`, { studio_location: STUDIO_1 });
         assert.strictEqual(recallRes.data.success, true);
-        console.log("✅ Admin berhasil melakukan Recall (Kirim Socket event).");
+        console.log("✅ Admin berhasil melakukan Recall (Kirim Socket/SSE event).");
 
         // SCENARIO 6: CLIENT CANCEL ANTRIAN
         console.log("\n--- Skenario 6: Client Cancel Antrian ---");
@@ -77,7 +79,7 @@ async function runTests() {
         await axios.post(`${BASE_URL}/admin/duration`, { studio_location: STUDIO_1, duration: 3 });
         stats1 = (await axios.get(`${BASE_URL}/stats/${STUDIO_1}`)).data;
         assert.strictEqual(stats1.session_duration, 3);
-        console.log(`✅ Durasi sesi berhasil diubah menjadi ${stats1.session_duration} menit (Sistem realtime akan memberitahukan update event ini ke client)`);
+        console.log(`✅ Durasi sesi berhasil diubah menjadi ${stats1.session_duration} menit.`);
 
         // SCENARIO 10: MULTI STUDIO ISOLATION
         console.log("\n--- Skenario 10: Multi Studio Isolation ---");
@@ -90,7 +92,7 @@ async function runTests() {
         assert.strictEqual(stats1.waiting, 8);
         console.log("✅ Antrian Studio Utama dan Youth Center terisolasi dengan sempurna!");
 
-        console.log("\n🎉 SELURUH SKENARIO E2E SYSTEM TESTING BERHASIL TERLEWATI! 🎉");
+        console.log("\n🎉 SELURUH SKENARIO E2E SYSTEM TESTING BERHASIL TERLEWATI DENGAN SUKSES! 🎉");
 
     } catch (e) {
         console.error("❌ PENGUJIAN GAGAL!", e.response ? e.response.data : e.message);

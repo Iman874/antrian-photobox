@@ -1,0 +1,10 @@
+# ============================================================
+# cPanel Phusion Passenger Configuration - Antrian Photobox
+# ============================================================
+# Mengatur batas minimum dan maksimum proses Node.js di cPanel
+# Catatan Arsitektur: 
+#   - Cukup gunakan 1 proses (MaxPoolSize 1) agar broadcast SSE (real-time) 
+#     tersinkronisasi dengan sempurna ke semua layar klien tanpa konflik multi-proses.
+#   - 1 Proses Node.js terbukti mampu melayani hingga 200+ request/detik (1000 user).
+PassengerMinInstances 1
+PassengerMaxPoolSize 1
