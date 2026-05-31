@@ -8,7 +8,7 @@ const path = require('path');
 const rootDir = path.resolve(__dirname, '../../');
 const defaultEnvPath = path.resolve(rootDir, '.env');
 if (fs.existsSync(defaultEnvPath)) {
-    dotenv.config({ path: defaultEnvPath });
+    dotenv.config({ path: defaultEnvPath, override: true });
 }
 
 // 2. Now determine the active environment
