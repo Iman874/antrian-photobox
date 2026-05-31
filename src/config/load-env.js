@@ -3,8 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 // 1. First, load the default .env if it exists to get the baseline NODE_ENV
-// Using process.cwd() ensures it always resolves relative to the project root folder
-const rootDir = process.cwd();
+// Using path.resolve(__dirname, '../../') ensures it always points to the project root folder
+// even if process.cwd() is overridden by cPanel/Passenger at runtime.
+const rootDir = path.resolve(__dirname, '../../');
 const defaultEnvPath = path.resolve(rootDir, '.env');
 if (fs.existsSync(defaultEnvPath)) {
     dotenv.config({ path: defaultEnvPath });
