@@ -488,6 +488,46 @@
             display: none !important;
         }
 
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 300;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: none;
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: rgba(6, 214, 160, 0.95);
+            color: white;
+            box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
+        }
+
+        .toast.error {
+            background: rgba(255, 71, 87, 0.95);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+        }
+
+        .toast.info {
+            background: rgba(46, 40, 60, 0.95);
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 40, 60, 0.3);
+        }
+
         /* Audio Unlock Overlay (Full-screen, WAJIB tap) */
         .audio-unlock-overlay {
             position: fixed;
@@ -698,6 +738,21 @@
         </div>
     </div>
 
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-title">Konfirmasi</div>
+            <div class="modal-subtitle" id="confirm-msg" style="white-space: pre-line;"></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel-modal" onclick="closeConfirmModal()">Batal</button>
+                <button class="btn-submit-modal" onclick="confirmModalYes()">Ya</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
     <script>
         const yearEl = document.getElementById('year');
         if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -729,8 +784,10 @@
             if (myQueueId) {
                 // Sudah ada di localStorage, cek apakah masih valid
                 if (myQueueLocation && myQueueLocation !== loc) {
-                    alert(`Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
-                    window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+                    showToast(`Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`, 'error');
+                    setTimeout(() => {
+                        window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+                    }, 1500);
                     return;
                 }
                 document.getElementById('take-queue-section').classList.add('hidden');
@@ -754,8 +811,10 @@
 
                         // Cek apakah antrian di lokasi lain
                         if (myQueueLocation !== loc) {
-                            alert(`Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
-                            window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+                            showToast(`Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`, 'error');
+                            setTimeout(() => {
+                                window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+                            }, 1500);
                             return;
                         }
 
@@ -813,7 +872,7 @@
         }, 500);
 
         evtSource.addEventListener('system_reset', () => {
-            alert('Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.');
+            showToast('Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.', 'info');
             clearMyQueue();
             window.location.reload();
         });
@@ -835,7 +894,7 @@
 
                 if (q.status === 'cancelled' || q.status === 'done') {
                     clearMyQueue();
-                    alert('Antrian telah selesai atau dibatalkan.');
+                    showToast('Antrian telah selesai atau dibatalkan.', 'info');
                     return;
                 }
 
@@ -883,10 +942,39 @@
             document.getElementById('client-name').value = '';
         }
 
+        let confirmCallback = null;
+
+        function showConfirm(msg, onYes) {
+            document.getElementById('confirm-msg').textContent = msg;
+            confirmCallback = onYes;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        function confirmModalYes() {
+            const cb = confirmCallback;
+            closeConfirmModal();
+            if (cb) cb();
+        }
+
+        // Toast notifications
+        let toastTimer = null;
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            if (toastTimer) clearTimeout(toastTimer);
+            toast.textContent = msg;
+            toast.className = `toast ${type || 'info'} show`;
+            toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
         async function submitQueue() {
             const name = document.getElementById('client-name').value.trim();
             const sessions = parseInt(document.getElementById('client-sessions').value) || 1;
-            if (!name) return alert('Nama harus diisi ya!');
+            if (!name) return showToast('Nama harus diisi ya!', 'error');
 
             try {
                 const res = await fetch('/api/queue', {
@@ -898,12 +986,12 @@
 
                 // Cek apakah server menolak (device sudah punya antrian)
                 if (data.success === false) {
-                    alert(`${data.message}`);
+                    showToast(`${data.message}`, 'error');
                     return;
                 }
 
                 if (data.recovered) {
-                    alert(`Halo ${data.name}! Kamu sudah memiliki antrian aktif (Nomor ${data.queue_number}). Kami me-restore layar antrianmu kembali.`);
+                    showToast(`Halo ${data.name}! Kamu sudah memiliki antrian aktif (Nomor ${data.queue_number}). Kami me-restore layar antrianmu kembali.`, 'success');
                 }
 
                 myQueueId = data.id;
@@ -920,8 +1008,11 @@
             } catch (e) { console.error(e); }
         }
 
-        async function cancelQueue() {
-            if (!confirm('Yakin mau batalkan antrian kamu?')) return;
+        function cancelQueue() {
+            showConfirm('Yakin mau batalkan antrian kamu?', doCancelQueue);
+        }
+
+        async function doCancelQueue() {
             try {
                 const res = await fetch('/api/queue/cancel', {
                     method: 'POST',
@@ -932,14 +1023,14 @@
 
                 if (data.success) {
                     clearMyQueue();
-                    alert('Antrian berhasil dibatalkan.');
+                    showToast('Antrian berhasil dibatalkan.', 'success');
                 } else {
-                    alert('Gagal membatalkan. Mungkin sudah dipanggil atau selesai.');
+                    showToast('Gagal membatalkan. Mungkin sudah dipanggil atau selesai.', 'error');
                     checkMyQueue();
                 }
             } catch (e) {
                 console.error(e);
-                alert('Error jaringan. Tidak dapat membatalkan.');
+                showToast('Error jaringan. Tidak dapat membatalkan.', 'error');
             }
         }
 
