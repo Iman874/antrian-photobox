@@ -7,6 +7,22 @@ const { broadcastAll } = require('../services/broadcast');
 
 const router = express.Router();
 
+const QUEUE_COOKIE = 'monobox_qid';
+
+function getCookie(req, name) {
+    const raw = req.headers.cookie || '';
+    const match = raw.match(new RegExp('(?:^|;\\s*)' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+function setQueueCookie(res, id) {
+    res.setHeader('Set-Cookie', `${QUEUE_COOKIE}=${id}; Path=/; HttpOnly; Max-Age=43200`);
+}
+
+function clearQueueCookie(res) {
+    res.setHeader('Set-Cookie', `${QUEUE_COOKIE}=; Path=/; HttpOnly; Max-Age=0`);
+}
+
 // Admin login API
 router.post('/admin/login', async (req, res) => {
     const { password, studio_location } = req.body;
@@ -93,6 +109,7 @@ router.post('/queue', async (req, res) => {
 
         if (sameName.length > 0) {
             if (device_id && sameName[0].device_id === device_id) {
+                setQueueCookie(res, sameName[0].id);
                 return res.json({
                     success: true,
                     id: sameName[0].id,
@@ -114,6 +131,7 @@ router.post('/queue', async (req, res) => {
                 [device_id]
             );
             if (existing.length > 0) {
+                setQueueCookie(res, existing[0].id);
                 return res.json({
                     success: false,
                     message: `Kamu sudah punya antrian aktif di ${existing[0].studio_location}. Selesaikan atau batalkan dulu ya! 😊`
@@ -133,6 +151,7 @@ router.post('/queue', async (req, res) => {
 
         await broadcastAll(studio_location);
 
+        setQueueCookie(res, result.insertId);
         res.json({ success: true, id: result.insertId, name, queue_number: nextNum, studio_location });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -145,6 +164,7 @@ router.post('/queue/cancel', async (req, res) => {
     try {
         await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['cancelled', id]);
         await broadcastAll(studio_location);
+        clearQueueCookie(res);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -262,6 +282,55 @@ router.get('/queue/device/:device_id', async (req, res) => {
         } else {
             res.json({ found: false });
         }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Recover queue via HttpOnly cookie token (survives normal browser close)
+router.get('/queue/recover/me', async (req, res) => {
+    try {
+        const qid = getCookie(req, QUEUE_COOKIE);
+        if (!qid) return res.json({ found: false });
+        const [rows] = await pool.query(
+            'SELECT * FROM queues WHERE id = ? AND DATE(created_at) = CURDATE()',
+            [qid]
+        );
+        if (rows.length === 0 || !['waiting', 'called'].includes(rows[0].status)) {
+            clearQueueCookie(res);
+            return res.json({ found: false });
+        }
+        const queue = rows[0];
+        if (req.query.device_id) {
+            await pool.query('UPDATE queues SET device_id = ? WHERE id = ?', [req.query.device_id, queue.id]);
+        }
+        res.json({ found: true, queue });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Recover client queue by name (fallback ketika cookie & device_id habis)
+router.post('/queue/recover', async (req, res) => {
+    const { name, studio_location, device_id } = req.body;
+    try {
+        const locs = studio_location ? [studio_location, null] : [null];
+        let queue = null;
+        for (const loc of locs) {
+            const params = loc
+                ? ['SELECT * FROM queues WHERE LOWER(name) = LOWER(?) AND studio_location = ? AND status IN (\'waiting\', \'called\') AND DATE(created_at) = CURDATE() ORDER BY id DESC LIMIT 1', [name, loc]]
+                : ['SELECT * FROM queues WHERE LOWER(name) = LOWER(?) AND status IN (\'waiting\', \'called\') AND DATE(created_at) = CURDATE() ORDER BY id DESC LIMIT 1', [name]];
+            const [rows] = await pool.query(params[0], params[1]);
+            if (rows.length > 0) { queue = rows[0]; break; }
+        }
+        if (!queue) {
+            return res.json({ success: false, message: 'Antrian tidak ditemukan' });
+        }
+        if (device_id) {
+            await pool.query('UPDATE queues SET device_id = ? WHERE id = ?', [device_id, queue.id]);
+        }
+        setQueueCookie(res, queue.id);
+        res.json({ success: true, queue });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

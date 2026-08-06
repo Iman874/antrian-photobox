@@ -220,6 +220,27 @@
             box-shadow: 0 0px 0 #A93A44;
         }
 
+        .recover-btn {
+            width: 100%;
+            margin-top: 14px;
+            padding: 10px;
+            border: 2px dashed #E0BDBD;
+            border-radius: 16px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #452030;
+            background: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .recover-btn:hover {
+            border-color: var(--purple);
+            color: var(--purple);
+            background: white;
+        }
+
         /* My Queue Card */
         .my-queue-card {
             background: white;
@@ -671,6 +692,9 @@
             <button class="take-queue-btn" onclick="openModal()">
                 AMBIL ANTRIAN
             </button>
+            <button id="recover-btn" class="recover-btn hidden" onclick="openRecoverModal()">
+                Sudah punya antrian? Kembalikan
+            </button>
         </div>
 
         <!-- My Queue Card (hidden by default) -->
@@ -756,6 +780,20 @@
         </div>
     </div>
 
+    <!-- Recover Modal -->
+    <div id="recover-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-title">Kembalikan Antrian</div>
+            <div class="modal-subtitle">Ketik nama yang tadi kamu gunakan saat mengambil antrian</div>
+            <input type="text" id="recover-name" class="name-input" autocomplete="off" placeholder="Ketik nama..."
+                maxlength="50">
+            <div class="modal-buttons">
+                <button class="btn-cancel-modal" onclick="closeRecoverModal()">Batal</button>
+                <button class="btn-submit-modal" onclick="recoverQueue()">Cari</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toast" class="toast"></div>
 
@@ -785,6 +823,47 @@
             localStorage.setItem('monobox_device_id', deviceId);
         }
 
+        // Restore antrian dari state (id, name, location)
+        function restoreQueue(q) {
+            myQueueId = q.id;
+            myQueueName = q.name;
+            myQueueLocation = q.studio_location;
+            localStorage.setItem('my_queue_id', myQueueId);
+            localStorage.setItem('my_queue_name', myQueueName);
+            localStorage.setItem('my_queue_location', myQueueLocation);
+
+            if (myQueueLocation !== loc) {
+                showToast(`Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan dulu ya!`, 'error');
+                setTimeout(() => {
+                    window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
+                }, 1500);
+                return;
+            }
+            document.getElementById('take-queue-section').classList.add('hidden');
+            document.getElementById('my-queue-section').classList.remove('hidden');
+            checkMyQueue();
+        }
+
+        // Lapis A: recovery dari cookie token
+        async function tryRecoverByCookie() {
+            try {
+                const res = await fetch(`/api/queue/recover/me?device_id=${encodeURIComponent(deviceId)}`);
+                const data = await res.json();
+                if (data.found) { restoreQueue(data.queue); return true; }
+            } catch (e) { console.warn('Cookie recovery failed:', e); }
+            return false;
+        }
+
+        // Lapis B: recovery dari device_id
+        async function tryRecoverByDevice() {
+            try {
+                const res = await fetch(`/api/queue/device/${deviceId}`);
+                const data = await res.json();
+                if (data.found) { restoreQueue(data.queue); return true; }
+            } catch (e) { console.warn('Device recovery failed:', e); }
+            return false;
+        }
+
         // Check if we already have queue (dari localStorage atau recovery dari server)
         async function initQueueState() {
             if (myQueueId) {
@@ -799,39 +878,15 @@
                 document.getElementById('take-queue-section').classList.add('hidden');
                 document.getElementById('my-queue-section').classList.remove('hidden');
                 checkMyQueue();
-            } else {
-                // localStorage kosong (mungkin di-clear saat app ditutup)
-                // Coba recovery dari server pakai device_id
-                try {
-                    const res = await fetch(`/api/queue/device/${deviceId}`);
-                    const data = await res.json();
-                    if (data.found) {
-                        const q = data.queue;
-                        // Restore state dari server
-                        myQueueId = q.id;
-                        myQueueName = q.name;
-                        myQueueLocation = q.studio_location;
-                        localStorage.setItem('my_queue_id', myQueueId);
-                        localStorage.setItem('my_queue_name', myQueueName);
-                        localStorage.setItem('my_queue_location', myQueueLocation);
-
-                        // Cek apakah antrian di lokasi lain
-                        if (myQueueLocation !== loc) {
-                            showToast(`Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`, 'error');
-                            setTimeout(() => {
-                                window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
-                            }, 1500);
-                            return;
-                        }
-
-                        document.getElementById('take-queue-section').classList.add('hidden');
-                        document.getElementById('my-queue-section').classList.remove('hidden');
-                        checkMyQueue();
-                    }
-                } catch (e) {
-                    console.warn('Device recovery check failed:', e);
-                }
+                return;
             }
+
+            // localStorage kosong (Chrome ditutup / data di-clear) → coba recover dari server
+            if (await tryRecoverByCookie()) return;   // Lapis A
+            if (await tryRecoverByDevice()) return;   // Lapis B
+
+            // Lapis C: fallback diam — tawarkan "Kembalikan Antrian Saya" (non-blocking)
+            document.getElementById('recover-btn').classList.remove('hidden');
         }
         initQueueState();
 
@@ -947,6 +1002,43 @@
             document.getElementById('modal').classList.add('hidden');
             document.getElementById('client-name').value = '';
         }
+
+        function openRecoverModal() {
+            document.getElementById('recover-modal').classList.remove('hidden');
+            document.getElementById('recover-name').focus();
+        }
+
+        function closeRecoverModal() {
+            document.getElementById('recover-modal').classList.add('hidden');
+            document.getElementById('recover-name').value = '';
+        }
+
+        async function recoverQueue() {
+            const name = document.getElementById('recover-name').value.trim();
+            if (!name) return showToast('Ketik nama kamu dulu ya!', 'error');
+            try {
+                const res = await fetch('/api/queue/recover', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, studio_location: loc, device_id: deviceId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeRecoverModal();
+                    restoreQueue(data.queue);
+                } else {
+                    closeRecoverModal();
+                    showToast('Antrian tidak ditemukan dengan nama itu. Ambil antrian baru ya!', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('Error jaringan. Coba lagi.', 'error');
+            }
+        }
+
+        document.getElementById('recover-name').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') recoverQueue();
+        });
 
         let confirmCallback = null;
 
