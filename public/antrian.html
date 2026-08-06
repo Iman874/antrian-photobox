@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Monobox Queue - Ambil Antrian</title>
+    <title>Monobox Queue - Ambil Antrian</title>
     <meta name="description" content="Ambil nomor antrian Monobox kamu sekarang!">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
@@ -16,14 +16,14 @@
         }
 
         :root {
-            --pink: #FF6B9D;
-            --blue: #4ECDC4;
-            --yellow: #FFE66D;
-            --purple: #A855F7;
-            --orange: #FF8C42;
+            --pink: #FF9D9D;
+            --blush: #FFC5AA;
+            --yellow: #EEF8CD;
+            --purple: #D62839;
+            --orange: #BBF1D2;
             --green: #06D6A0;
             --red: #FF4757;
-            --dark: #2D3436;
+            --dark: #452030;
             --light: #FFF9F0;
         }
 
@@ -32,9 +32,9 @@
             min-height: 100vh;
             background: var(--light);
             background-image:
-                radial-gradient(circle at 20% 50%, rgba(255, 107, 157, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(78, 205, 196, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 50% 80%, rgba(255, 230, 109, 0.15) 0%, transparent 50%);
+                radial-gradient(circle at 20% 50%, rgba(255, 157, 157, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 197, 170, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(238, 248, 205, 0.15) 0%, transparent 50%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -57,6 +57,13 @@
             animation: fadeInDown 0.5s ease;
         }
 
+        .page-header .logo-img {
+            display: block;
+            width: auto;
+            height: 44px;
+            margin: 0 auto 10px;
+        }
+
         @keyframes fadeInDown {
             from {
                 opacity: 0;
@@ -75,18 +82,25 @@
             border-radius: 50px;
             font-size: 1.3rem;
             font-weight: 700;
-            color: white;
+            color: var(--dark);
             letter-spacing: 1px;
         }
 
-        .location-badge.studio {
-            background: linear-gradient(135deg, var(--pink), var(--orange));
-            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+.location-badge.studio {
+            background: linear-gradient(135deg, #D62839, #D81B60);
+            box-shadow: 0 4px 15px rgba(214, 40, 57, 0.35);
+            color: white;
         }
 
         .location-badge.youth {
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+            background: linear-gradient(135deg, #00796B, #D62839);
+            box-shadow: 0 4px 15px rgba(0, 121, 107, 0.35);
+            color: white;
+        }
+
+        .location-badge.youth {
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            box-shadow: 0 4px 15px rgba(214, 40, 57, 0.3);
         }
 
         /* Info Card */
@@ -115,7 +129,7 @@
 
         .now-serving-label {
             display: inline-block;
-            background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(168, 85, 247, 0.15));
+            background: linear-gradient(135deg, rgba(255, 197, 170, 0.25), rgba(214, 40, 57, 0.15));
             color: var(--purple);
             font-weight: 600;
             font-size: 0.85rem;
@@ -149,7 +163,7 @@
         .stat-box .label {
             font-size: 0.7rem;
             font-weight: 600;
-            color: #bbb;
+            color: #452030;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -160,11 +174,11 @@
         }
 
         .stat-box .value.pink {
-            color: var(--pink);
+            color: #D62839;
         }
 
         .stat-box .value.yellow {
-            color: var(--orange);
+            color: var(--purple);
         }
 
         .stat-box .value.green {
@@ -181,22 +195,23 @@
             font-size: 1.4rem;
             font-weight: 700;
             color: white;
-            background: linear-gradient(135deg, var(--pink), var(--orange));
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+            background: linear-gradient(135deg, #D62839, #D81B60);
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 6px 0 #D94E3B, 0 8px 20px rgba(255, 107, 157, 0.3);
+            box-shadow: 0 6px 0 #A93A44, 0 8px 20px rgba(214, 40, 57, 0.35);
             animation: fadeInUp 0.5s ease 0.4s both;
             letter-spacing: 1px;
         }
 
         .take-queue-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 0 #D94E3B, 0 12px 25px rgba(255, 107, 157, 0.4);
+            box-shadow: 0 8px 0 #A93A44, 0 12px 25px rgba(214, 40, 57, 0.45);
         }
 
         .take-queue-btn:active {
             transform: translateY(6px);
-            box-shadow: 0 0px 0 #D94E3B;
+            box-shadow: 0 0px 0 #A93A44;
         }
 
         /* My Queue Card */
@@ -225,8 +240,8 @@
 
         .my-queue-label {
             display: inline-block;
-            background: linear-gradient(135deg, var(--green), var(--blue));
-            color: white;
+            background: linear-gradient(135deg, var(--purple), var(--blush));
+            color: var(--dark);
             font-weight: 600;
             font-size: 0.85rem;
             padding: 5px 18px;
@@ -246,7 +261,7 @@
         .my-queue-name {
             font-size: 1rem;
             font-weight: 500;
-            color: #999;
+            color: #452030;
             margin-bottom: 16px;
         }
 
@@ -267,7 +282,7 @@
         .grid-item .gl {
             font-size: 0.7rem;
             font-weight: 600;
-            color: #bbb;
+            color: #452030;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -288,8 +303,8 @@
         }
 
         .status-waiting {
-            background: rgba(255, 140, 66, 0.15);
-            color: var(--orange);
+            background: rgba(187, 241, 210, 0.4);
+            color: var(--dark);
         }
 
         .status-called {
@@ -318,7 +333,7 @@
             font-family: 'Fredoka', sans-serif;
             font-size: 1rem;
             font-weight: 600;
-            color: #999;
+            color: #452030;
             background: #FAFAFA;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -364,7 +379,7 @@
             width: 100%;
             max-width: 400px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
-            border: 4px solid var(--blue);
+            border: 4px solid var(--pink);
             text-align: center;
             animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
@@ -379,7 +394,7 @@
         .modal-subtitle {
             font-size: 1rem;
             font-weight: 500;
-            color: #aaa;
+            color: #452030;
             margin-bottom: 24px;
         }
 
@@ -399,11 +414,11 @@
         }
 
         .name-input:focus {
-            border-color: var(--blue);
+            border-color: var(--pink);
         }
 
         .name-input::placeholder {
-            color: #ccc;
+            color: #452030;
         }
 
         .modal-buttons {
@@ -419,14 +434,14 @@
             font-family: 'Fredoka', sans-serif;
             font-size: 1rem;
             font-weight: 600;
-            color: #999;
+            color: #452030;
             background: white;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .btn-cancel-modal:hover {
-            border-color: #ccc;
+            border-color: #452030;
             background: #fafafa;
         }
 
@@ -438,16 +453,16 @@
             font-family: 'Fredoka', sans-serif;
             font-size: 1rem;
             font-weight: 700;
-            color: white;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--purple), var(--pink));
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+            box-shadow: 0 4px 12px rgba(214, 40, 57, 0.3);
         }
 
         .btn-submit-modal:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(78, 205, 196, 0.4);
+            box-shadow: 0 6px 18px rgba(214, 40, 57, 0.4);
         }
 
         .back-btn {
@@ -457,7 +472,7 @@
             font-family: 'Fredoka', sans-serif;
             font-size: 0.9rem;
             font-weight: 600;
-            color: #bbb;
+            color: #452030;
             background: none;
             border: none;
             cursor: pointer;
@@ -497,15 +512,10 @@
             padding: 48px 40px;
             text-align: center;
             border: 5px solid var(--purple);
-            box-shadow: 0 20px 60px rgba(168, 85, 247, 0.2);
+            box-shadow: 0 20px 60px rgba(214, 40, 57, 0.2);
             animation: pulse 2s ease-in-out infinite;
             max-width: 360px;
             width: 90%;
-        }
-
-        .audio-unlock-card .emoji {
-            font-size: 4rem;
-            margin-bottom: 16px;
         }
 
         .audio-unlock-card h2 {
@@ -518,7 +528,7 @@
         .audio-unlock-card p {
             font-size: 0.95rem;
             font-weight: 500;
-            color: #aaa;
+            color: #452030;
             line-height: 1.5;
         }
 
@@ -527,8 +537,43 @@
             text-align: center;
             font-size: 0.8rem;
             font-weight: 500;
-            color: #ccc;
+            color: #452030;
             margin-top: 12px;
+        }
+
+        /* Social links */
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .social-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            border: 2px solid #F3DEDE;
+            border-radius: 20px;
+            padding: 8px 14px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .social-links a:hover {
+            color: var(--purple);
+            border-color: rgba(214, 40, 57, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .social-links svg {
+            width: 16px;
+            height: 16px;
         }
     </style>
 </head>
@@ -537,7 +582,6 @@
     <!-- Audio unlock overlay (WAJIB tap sebelum bisa pakai halaman) -->
     <div id="audio-unlock-overlay" class="audio-unlock-overlay" onclick="unlockAudio()">
         <div class="audio-unlock-card">
-            <div class="emoji">🔔</div>
             <h2>Aktifkan Notifikasi Suara</h2>
             <p>Tap layar ini agar HP kamu berbunyi saat nama kamu dipanggil</p>
         </div>
@@ -553,12 +597,12 @@
 
         <!-- Header -->
         <div class="page-header">
+            <img src="/logobarumonobox-crop.png" alt="Monobox" class="logo-img">
             <div class="location-badge" id="location-badge">STUDIO UTAMA</div>
         </div>
-
         <!-- Now Serving Info Card -->
         <div class="info-card">
-            <div class="now-serving-label">📢 SEDANG DILAYANI</div>
+            <div class="now-serving-label">SEDANG DILAYANI</div>
             <div class="now-serving-number" id="now-serving">-</div>
             <div class="stats-row">
                 <div class="stat-box">
@@ -579,14 +623,14 @@
         <!-- Take Queue Button -->
         <div id="take-queue-section">
             <button class="take-queue-btn" onclick="openModal()">
-                AMBIL ANTRIAN ✨
+                AMBIL ANTRIAN
             </button>
         </div>
 
         <!-- My Queue Card (hidden by default) -->
         <div id="my-queue-section" class="hidden">
             <div class="my-queue-card">
-                <div class="my-queue-label">🎫 Nomor Antrian Kamu</div>
+                <div class="my-queue-label">Nomor Antrian Kamu</div>
                 <div class="my-queue-number" id="my-queue-number">00</div>
                 <div class="my-queue-name" id="my-queue-name">-</div>
 
@@ -606,24 +650,40 @@
                     <div class="grid-item">
                         <div class="gl">Status</div>
                         <div class="gv">
-                            <span class="status-badge status-waiting" id="my-status">⏳ MENUNGGU</span>
+                            <span class="status-badge status-waiting" id="my-status">MENUNGGU</span>
                         </div>
                     </div>
                 </div>
 
                 <button class="cancel-btn" onclick="cancelQueue()">
-                    😢 Batalkan Antrian
+                    Batalkan Antrian
                 </button>
             </div>
         </div>
 
-        <div class="footer">MONODEV 2026 📸</div>
+        <!-- Social Media -->
+        <div class="social-links">
+            <a href="https://monobox.monoframe.id/" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <span>Website</span>
+            </a>
+            <a href="https://www.instagram.com/monobox.frame/" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                <span>Instagram</span>
+            </a>
+            <a href="https://www.tiktok.com/@monobox.frame" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                <span>TikTok</span>
+            </a>
+        </div>
+
+        <div class="footer">MONODEV <span id="year">2026</span></div>
     </div>
 
     <!-- Modal Form -->
     <div id="modal" class="modal-overlay hidden">
         <div class="modal-card">
-            <div class="modal-title">Halo! 👋</div>
+            <div class="modal-title">Halo!</div>
             <div class="modal-subtitle">Siapa nama kamu?</div>
             <input type="text" id="client-name" class="name-input" autocomplete="off" placeholder="Ketik nama kamu..."
                 maxlength="50" style="margin-bottom: 12px;">
@@ -633,19 +693,22 @@
             </select>
             <div class="modal-buttons">
                 <button class="btn-cancel-modal" onclick="closeModal()">Batal</button>
-                <button class="btn-submit-modal" onclick="submitQueue()">Submit 🚀</button>
+                <button class="btn-submit-modal" onclick="submitQueue()">Ambil Nomor</button>
             </div>
         </div>
     </div>
 
     <script>
+        const yearEl = document.getElementById('year');
+        if (yearEl) yearEl.textContent = new Date().getFullYear();
         const loc = window.location.pathname.includes('outdoor') ? 'Youth Center' : 'Studio Utama';
+        const locLabel = loc === 'Youth Center' ? 'JAMSIT' : 'Studio Utama';
         const evtSource = new EventSource('/api/stream/' + loc);
 
         const badge = document.getElementById('location-badge');
-        badge.textContent = loc.toUpperCase();
+        badge.textContent = locLabel.toUpperCase();
         badge.classList.add(loc === 'Youth Center' ? 'youth' : 'studio');
-        document.title = `📸 ${loc} - Antrian Monobox`;
+        document.title = `${locLabel} - Antrian Monobox`;
 
         let sessionDuration = 7;
         let myQueueId = localStorage.getItem('my_queue_id');
@@ -666,7 +729,7 @@
             if (myQueueId) {
                 // Sudah ada di localStorage, cek apakah masih valid
                 if (myQueueLocation && myQueueLocation !== loc) {
-                    alert(`⚠️ Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
+                    alert(`Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
                     window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
                     return;
                 }
@@ -691,7 +754,7 @@
 
                         // Cek apakah antrian di lokasi lain
                         if (myQueueLocation !== loc) {
-                            alert(`⚠️ Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
+                            alert(`Kamu sudah punya antrian aktif di ${myQueueLocation}. Selesaikan atau batalkan dulu ya!`);
                             window.location.href = myQueueLocation === 'Youth Center' ? '/outdoor/queue' : '/indoor/queue';
                             return;
                         }
@@ -750,7 +813,7 @@
         }, 500);
 
         evtSource.addEventListener('system_reset', () => {
-            alert('⚠️ Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.');
+            alert('Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.');
             clearMyQueue();
             window.location.reload();
         });
@@ -772,13 +835,13 @@
 
                 if (q.status === 'cancelled' || q.status === 'done') {
                     clearMyQueue();
-                    alert('🎉 Antrian telah selesai / dibatalkan.');
+                    alert('Antrian telah selesai atau dibatalkan.');
                     return;
                 }
 
                 const statusEl = document.getElementById('my-status');
                 if (q.status === 'called') {
-                    if (statusEl.textContent !== '🟢 DIPANGGIL!') {
+                    if (statusEl.textContent !== 'DIPANGGIL!') {
                         if ("Notification" in window && Notification.permission === "granted") {
                             new Notification(`Giliran Kamu! (${q.queue_number})`, {
                                 body: `Silakan menuju ${loc} sekarang!`
@@ -787,13 +850,13 @@
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     }
 
-                    statusEl.textContent = '🟢 DIPANGGIL!';
+                    statusEl.textContent = 'DIPANGGIL!';
                     statusEl.className = 'status-badge status-called';
                     document.getElementById('my-before').textContent = '0';
                     document.getElementById('my-wait').textContent = '0m';
                     document.getElementById('my-call-time').textContent = 'SEKARANG!';
                 } else if (q.status === 'waiting') {
-                    statusEl.textContent = '⏳ MENUNGGU';
+                    statusEl.textContent = 'MENUNGGU';
                     statusEl.className = 'status-badge status-waiting';
 
                     const beforeSessions = data.beforeSessions || 0;
@@ -823,7 +886,7 @@
         async function submitQueue() {
             const name = document.getElementById('client-name').value.trim();
             const sessions = parseInt(document.getElementById('client-sessions').value) || 1;
-            if (!name) return alert('⚠️ Nama harus diisi ya!');
+            if (!name) return alert('Nama harus diisi ya!');
 
             try {
                 const res = await fetch('/api/queue', {
@@ -835,12 +898,12 @@
 
                 // Cek apakah server menolak (device sudah punya antrian)
                 if (data.success === false) {
-                    alert(`⚠️ ${data.message}`);
+                    alert(`${data.message}`);
                     return;
                 }
 
                 if (data.recovered) {
-                    alert(`⚠️ Halo ${data.name}! Kamu sudah memiliki antrian aktif (Nomor ${data.queue_number}). Kami me-restore layar antrianmu kembali.`);
+                    alert(`Halo ${data.name}! Kamu sudah memiliki antrian aktif (Nomor ${data.queue_number}). Kami me-restore layar antrianmu kembali.`);
                 }
 
                 myQueueId = data.id;
@@ -858,7 +921,7 @@
         }
 
         async function cancelQueue() {
-            if (!confirm('😢 Yakin mau batalkan antrian kamu?')) return;
+            if (!confirm('Yakin mau batalkan antrian kamu?')) return;
             try {
                 const res = await fetch('/api/queue/cancel', {
                     method: 'POST',
@@ -869,14 +932,14 @@
 
                 if (data.success) {
                     clearMyQueue();
-                    alert('✅ Antrian berhasil dibatalkan.');
+                    alert('Antrian berhasil dibatalkan.');
                 } else {
-                    alert('❌ Gagal membatalkan. Mungkin sudah dipanggil atau selesai.');
+                    alert('Gagal membatalkan. Mungkin sudah dipanggil atau selesai.');
                     checkMyQueue();
                 }
             } catch (e) {
                 console.error(e);
-                alert('❌ Error jaringan. Tidak dapat membatalkan.');
+                alert('Error jaringan. Tidak dapat membatalkan.');
             }
         }
 
@@ -897,7 +960,7 @@
         });
 
         // ============================================
-        // 🔊 CLIENT-SIDE AUDIO NOTIFICATION SYSTEM
+        // CLIENT-SIDE AUDIO NOTIFICATION SYSTEM
         // ============================================
         let audioCtx = null;
         let bellBuffer = null;
@@ -941,7 +1004,7 @@
             // Hapus overlay
             const overlay = document.getElementById('audio-unlock-overlay');
             if (overlay) overlay.remove();
-            console.log('🔊 Audio unlocked for client notifications');
+            console.log('Audio unlocked for client notifications');
         }
 
         async function playBellSound() {

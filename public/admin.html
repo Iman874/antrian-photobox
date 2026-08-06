@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔐 Login Admin - Monoframe Monobox</title>
+    <title>Login Admin - Monoframe Monobox</title>
     <meta name="description" content="Admin panel untuk sistem antrian Monobox Monoframe">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -15,13 +15,13 @@
         }
 
         :root {
-            --pink: #FF6B9D;
-            --blue: #4ECDC4;
-            --yellow: #FFE66D;
-            --purple: #A855F7;
-            --orange: #FF8C42;
+            --pink: #FF9D9D;
+            --blush: #FFC5AA;
+            --yellow: #EEF8CD;
+            --purple: #E8767F;
+            --orange: #BBF1D2;
             --green: #06D6A0;
-            --dark: #2D3436;
+            --dark: #452030;
             --light: #FFF9F0;
         }
 
@@ -30,8 +30,8 @@
             min-height: 100vh;
             background: var(--light);
             background-image:
-                radial-gradient(circle at 10% 30%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 90% 70%, rgba(78, 205, 196, 0.1) 0%, transparent 50%);
+                radial-gradient(circle at 10% 30%, rgba(232, 118, 127, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 90% 70%, rgba(255, 197, 170, 0.1) 0%, transparent 50%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -55,14 +55,13 @@
 
         .logo-badge {
             display: inline-block;
-            background: linear-gradient(135deg, var(--purple), var(--blue));
-            color: white;
-            padding: 14px 36px;
-            border-radius: 50px;
-            font-size: 1.8rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.3);
+            padding: 10px 30px;
+        }
+
+        .logo-badge img {
+            display: block;
+            width: auto;
+            height: 56px;
             animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
@@ -86,7 +85,7 @@
             margin-top: 10px;
             font-size: 0.95rem;
             font-weight: 500;
-            color: #bbb;
+            color: #452030;
             letter-spacing: 2px;
         }
 
@@ -134,31 +133,13 @@
         }
 
         .card-youth:hover {
-            border-color: var(--blue);
+            border-color: var(--pink);
         }
 
         .card-left {
             display: flex;
             align-items: center;
             gap: 16px;
-        }
-
-        .card-emoji {
-            font-size: 2rem;
-            width: 50px;
-            height: 50px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card-studio .card-emoji {
-            background: rgba(255, 107, 157, 0.1);
-        }
-
-        .card-youth .card-emoji {
-            background: rgba(78, 205, 196, 0.1);
         }
 
         .card-info .card-title {
@@ -170,13 +151,13 @@
         .card-info .card-sub {
             font-size: 0.75rem;
             font-weight: 500;
-            color: #bbb;
+            color: #452030;
             letter-spacing: 1px;
         }
 
         .card-arrow {
             font-size: 1.2rem;
-            color: #ddd;
+            color: #452030;
             transition: all 0.3s;
         }
 
@@ -202,7 +183,7 @@
             text-align: center;
             font-weight: 600;
             font-size: 0.85rem;
-            color: #999;
+            color: #452030;
             cursor: pointer;
             text-decoration: none;
             transition: all 0.3s;
@@ -218,7 +199,7 @@
         .footer {
             font-size: 0.75rem;
             font-weight: 500;
-            color: #ccc;
+            color: #452030;
             letter-spacing: 1px;
         }
 
@@ -273,13 +254,14 @@
             }
         }
 
-        .modal-icon {
-            font-size: 3rem;
-            margin-bottom: 8px;
-        }
-
         .modal-title {
             font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .modal-title {            font-size: 1.5rem;
             font-weight: 700;
             color: var(--dark);
             margin-bottom: 4px;
@@ -332,14 +314,14 @@
             font-family: 'Fredoka', sans-serif;
             font-size: 1rem;
             font-weight: 600;
-            color: #999;
+            color: #452030;
             background: white;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .btn-back:hover {
-            border-color: #ccc;
+            border-color: #452030;
             background: #fafafa;
         }
 
@@ -351,16 +333,16 @@
             font-family: 'Fredoka', sans-serif;
             font-size: 1rem;
             font-weight: 700;
-            color: white;
-            background: linear-gradient(135deg, var(--purple), var(--blue));
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--purple), var(--pink));
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+            box-shadow: 0 4px 12px rgba(232, 118, 127, 0.3);
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(168, 85, 247, 0.4);
+            box-shadow: 0 6px 18px rgba(232, 118, 127, 0.4);
         }
 
         .hidden {
@@ -373,15 +355,14 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div class="logo-badge">🔐 MONOFRAME</div>
-            <div class="subtitle">CONTROL CENTER</div>
+            <div class="logo-badge"><img src="/logobarumonobox-crop.png" alt="Monobox"></div>
+            <div class="subtitle">PILIH LOKASI LOGIN</div>
         </div>
 
         <!-- Location Selection -->
         <div class="select-section">
             <div class="location-select-card card-studio" onclick="openLogin('Studio Utama')">
                 <div class="card-left">
-                    <div class="card-emoji">🏠</div>
                     <div class="card-info">
                         <div class="card-title">STUDIO UTAMA</div>
                         <div class="card-sub">ADMIN PANEL</div>
@@ -392,9 +373,8 @@
 
             <div class="location-select-card card-youth" onclick="openLogin('Youth Center')">
                 <div class="card-left">
-                    <div class="card-emoji">🌳</div>
                     <div class="card-info">
-                        <div class="card-title">YOUTH CENTER</div>
+                        <div class="card-title">JAMSIT</div>
                         <div class="card-sub">ADMIN PANEL</div>
                     </div>
                 </div>
@@ -404,18 +384,17 @@
 
         <!-- Quick Links -->
         <div class="quick-links">
-            <a href="/display/indoor" class="quick-link">📺 Display Screen</a>
-            <a href="/" class="quick-link">🏠 Public View</a>
+            <a href="/display/indoor" class="quick-link">Display Screen</a>
+            <a href="/" class="quick-link">Public View</a>
         </div>
 
         <!-- Footer -->
-        <div class="footer">STAFF ACCESS ONLY 🔒</div>
+        <div class="footer">STAFF ACCESS ONLY</div>
     </div>
 
     <!-- Password Modal -->
     <div id="password-modal" class="modal-overlay hidden">
         <div class="modal-card">
-            <div class="modal-icon">🔑</div>
             <div class="modal-title">Masukkan Password</div>
             <div class="modal-location" id="modal-location">Studio Utama</div>
             <input type="password" id="password-input" class="password-input" placeholder="Password..."
@@ -423,7 +402,7 @@
             <div class="error-msg" id="error-msg"></div>
             <div class="modal-buttons">
                 <button class="btn-back" onclick="closeLogin()">Batal</button>
-                <button class="btn-login" onclick="doLogin()">Masuk 🚀</button>
+                <button class="btn-login" onclick="doLogin()">Masuk</button>
             </div>
         </div>
     </div>
@@ -433,7 +412,7 @@
 
         function openLogin(location) {
             selectedLocation = location;
-            document.getElementById('modal-location').textContent = location;
+            document.getElementById('modal-location').textContent = location === 'Youth Center' ? 'JAMSIT' : location;
             document.getElementById('password-modal').classList.remove('hidden');
             document.getElementById('password-input').value = '';
             document.getElementById('error-msg').textContent = '';
@@ -448,7 +427,7 @@
         async function doLogin() {
             const password = document.getElementById('password-input').value.trim();
             if (!password) {
-                document.getElementById('error-msg').textContent = '⚠️ Password harus diisi!';
+                document.getElementById('error-msg').textContent = 'Password harus diisi!';
                 return;
             }
 
@@ -466,13 +445,13 @@
                     const route = selectedLocation === 'Youth Center' ? '/admin/outdoor' : '/admin/indoor';
                     window.location.href = route;
                 } else {
-                    document.getElementById('error-msg').textContent = '❌ Password salah!';
+                    document.getElementById('error-msg').textContent = 'Password salah!';
                     document.getElementById('password-input').value = '';
                     document.getElementById('password-input').focus();
                 }
             } catch (e) {
                 console.error(e);
-                document.getElementById('error-msg').textContent = '❌ Error koneksi!';
+                document.getElementById('error-msg').textContent = 'Error koneksi!';
             }
         }
 
