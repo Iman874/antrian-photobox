@@ -844,7 +844,7 @@
                     if (statusEl.textContent !== 'DIPANGGIL!') {
                         if ("Notification" in window && Notification.permission === "granted") {
                             new Notification(`Giliran Kamu! (${q.queue_number})`, {
-                                body: `Silakan menuju ${loc} sekarang!`
+                                body: `Silakan menuju ${loc === 'Youth Center' ? 'Monobox Jamsit' : loc} sekarang!`
                             });
                         }
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
