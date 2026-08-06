@@ -30,13 +30,20 @@
             font-family: 'Fredoka', sans-serif;
             min-height: 100vh;
             background: var(--light);
-            background-image:
-                radial-gradient(circle at 15% 25%, rgba(232, 118, 127, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 85% 75%, rgba(255, 197, 170, 0.08) 0%, transparent 50%);
+            background-image: url('/bgmobilenologo.webp');
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                background-image: url('/bgdesktop.webp');
+            }
         }
 
         .container {

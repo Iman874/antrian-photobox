@@ -32,26 +32,10 @@
             overflow: hidden;
             height: 100vh;
             background: var(--light);
-            background-image:
-                radial-gradient(circle at 10% 20%, rgba(255, 157, 157, 0.12) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(255, 197, 170, 0.12) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(238, 248, 205, 0.1) 0%, transparent 50%);
-            background-size: 200% 200%;
-            animation: bgShift 15s ease infinite;
-        }
-
-        @keyframes bgShift {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
+            background-image: url('/bgdesktop.webp');
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
         }
 
         .start-overlay {
