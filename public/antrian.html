@@ -340,6 +340,12 @@
             animation: pulse 1.5s ease-in-out infinite;
         }
 
+        .status-ready {
+            background: rgba(255, 157, 157, 0.2);
+            color: var(--purple);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
         @keyframes pulse {
 
             0%,
@@ -813,6 +819,7 @@
         let myQueueId = localStorage.getItem('my_queue_id');
         let myQueueName = localStorage.getItem('my_queue_name');
         let myQueueLocation = localStorage.getItem('my_queue_location');
+        let bersiapFlag = false;
 
         // Generate atau ambil device_id unik per browser
         let deviceId = localStorage.getItem('monobox_device_id');
@@ -970,14 +977,20 @@
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     }
 
+                    bersiapFlag = false;
                     statusEl.textContent = 'DIPANGGIL!';
                     statusEl.className = 'status-badge status-called';
                     document.getElementById('my-before').textContent = '0';
                     document.getElementById('my-wait').textContent = '0m';
                     document.getElementById('my-call-time').textContent = 'SEKARANG!';
                 } else if (q.status === 'waiting') {
-                    statusEl.textContent = 'MENUNGGU';
-                    statusEl.className = 'status-badge status-waiting';
+                    if (bersiapFlag) {
+                        statusEl.textContent = 'BERSIAP-SIAP!';
+                        statusEl.className = 'status-badge status-ready';
+                    } else {
+                        statusEl.textContent = 'MENUNGGU';
+                        statusEl.className = 'status-badge status-waiting';
+                    }
 
                     const beforeSessions = data.beforeSessions || 0;
                     const waitMin = beforeSessions * sessionDuration;
@@ -1136,6 +1149,7 @@
             myQueueId = null;
             myQueueName = null;
             myQueueLocation = null;
+            bersiapFlag = false;
             localStorage.removeItem('my_queue_id');
             localStorage.removeItem('my_queue_name');
             localStorage.removeItem('my_queue_location');
@@ -1263,6 +1277,36 @@
             }
         }
 
+        async function playBersiapSound(number, name) {
+            if (!audioUnlocked) return;
+
+            try {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+
+                await playBellSound();
+                await new Promise(r => setTimeout(r, 300));
+
+                const text = `Nomor antrian ${number} atas nama ${toTitleCase(name)}, bersiap-siap, giliran anda sebentar lagi`;
+                const response = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                ttsEl.src = audioUrl;
+                ttsEl.load();
+                await ttsEl.play();
+                ttsEl.onended = () => URL.revokeObjectURL(audioUrl);
+            } catch (e) {
+                console.error('Client Bersiap Audio Error:', e);
+            }
+        }
+
         // SSE: Listen for play_audio event
         // HANYA putar suara jika antrian yang dipanggil = antrian SAYA
         evtSource.addEventListener('play_audio', (e) => {
@@ -1274,6 +1318,23 @@
                 if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
             }
             // Jika bukan antrian saya → tidak ada suara, HP diam saja
+        });
+
+        // SSE: Listen for bersiap event (sisa 2 orang lagi)
+        evtSource.addEventListener('bersiap', (e) => {
+            const queue = JSON.parse(e.data);
+            if (myQueueId && queue.id == myQueueId) {
+                bersiapFlag = true;
+                playBersiapSound(queue.queue_number, queue.name);
+                if (navigator.vibrate) navigator.vibrate([150, 100, 150]);
+                showToast('Bersiap-siap! Giliran kamu sebentar lagi 😊', 'info');
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification(`Bersiap-siap! (${queue.queue_number})`, {
+                        body: 'Giliran kamu sebentar lagi. Menuju lokasi Monobox ya!'
+                    });
+                }
+                checkMyQueue();
+            }
         });
     </script>
 </body>

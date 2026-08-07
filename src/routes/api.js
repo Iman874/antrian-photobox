@@ -4,6 +4,7 @@ const { pool } = require('../config/db');
 const { getStats } = require('../services/stats');
 const { addClient, removeClient, sendSSE, generateClientId } = require('../services/sse');
 const { broadcastAll } = require('../services/broadcast');
+const { getBersiapCandidate } = require('../services/bersiap');
 
 const router = express.Router();
 
@@ -194,6 +195,13 @@ router.post('/admin/call_next', async (req, res) => {
             await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['called', next[0].id]);
             await broadcastAll(studio_location);
             sendSSE('play_audio', next[0], studio_location);
+
+            // Bersiap-siap: client dengan sisa 2 orang di depan (orang ke-3 di antrian)
+            const ready = await getBersiapCandidate(studio_location);
+            if (ready) {
+                sendSSE('bersiap', ready, studio_location);
+            }
+
             res.json({ success: true, called: next[0] });
         } else {
             res.json({ success: false, message: 'No waiting queue' });

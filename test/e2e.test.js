@@ -1,7 +1,39 @@
 const axios = require('axios');
 const assert = require('assert');
+const http = require('http');
 
 const BASE_URL = 'http://localhost:3000/api';
+
+// Buka koneksi SSE dan resolve saat event tertentu diterima
+function waitForSSEEvent(eventName, timeoutMs = 5000) {
+    return new Promise((resolve, reject) => {
+        const req = http.get(`${BASE_URL}/stream/${encodeURIComponent('Studio Utama')}`, (res) => {
+            let buffer = '';
+            res.setEncoding('utf8');
+            const timer = setTimeout(() => {
+                req.destroy();
+                reject(new Error(`Timeout menunggu event ${eventName}`));
+            }, timeoutMs);
+            res.on('data', (chunk) => {
+                buffer += chunk;
+                let idx;
+                while ((idx = buffer.indexOf('\n\n')) !== -1) {
+                    const frame = buffer.slice(0, idx);
+                    buffer = buffer.slice(idx + 2);
+                    const evMatch = frame.match(/^event: (.+)$/m);
+                    if (evMatch && evMatch[1] === eventName) {
+                        clearTimeout(timer);
+                        req.destroy();
+                        const dataMatch = frame.match(/^data: (.+)$/m);
+                        resolve(dataMatch ? JSON.parse(dataMatch[1]) : null);
+                        return;
+                    }
+                }
+            });
+        });
+        req.on('error', (e) => reject(e));
+    });
+}
 
 async function runTests() {
     console.log("Memulai End-to-End System Testing di folder test/...");
@@ -47,8 +79,14 @@ async function runTests() {
 
         // SCENARIO 3 & 4: ADMIN MEMANGGIL ANTRIAN (CALL NEXT)
         console.log("\n--- Skenario 3 & 4: Admin Call Next ---");
+        // Client dengan sisa 2 orang (orang ke-3 = Rina '03') harus dapat event bersiap serentak
+        const bersiapPromise = waitForSSEEvent('bersiap');
         let callRes = await axios.post(`${BASE_URL}/admin/call_next`, { studio_location: STUDIO_1 });
         assert.strictEqual(callRes.data.called.queue_number, '01');
+        const bersiapEvent = await bersiapPromise;
+        assert.strictEqual(bersiapEvent.queue_number, '03');
+        assert.strictEqual(bersiapEvent.name, 'Rina');
+        console.log(`✅ Bersiap-siap serentak: ${bersiapEvent.queue_number} - ${bersiapEvent.name} mendapat notifikasi bersiap.`);
         
         stats1 = (await axios.get(`${BASE_URL}/stats/${STUDIO_1}`)).data;
         assert.strictEqual(stats1.waiting, 9);
