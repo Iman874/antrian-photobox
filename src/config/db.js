@@ -18,7 +18,7 @@ console.log(`[DB] Host: ${dbConfig.host} | Database: ${dbConfig.database}`);
 const pool = mysql.createPool({
     ...dbConfig,
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 20,
     queueLimit: 0
 });
 

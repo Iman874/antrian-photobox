@@ -931,13 +931,14 @@
         });
 
         // FALLBACK POLLING: Cadangan update (SSE = jalur utama realtime)
+        // Interval 30s: cukup sebagai cadangan bila SSE putus, tanpa membebani DB
         setInterval(async () => {
             try {
                 const res = await fetch('/api/stats/' + encodeURIComponent(loc));
                 const stats = await res.json();
                 updateStats(stats);
             } catch (e) { /* abaikan error polling */ }
-        }, 5000);
+        }, 30000);
 
         evtSource.addEventListener('system_reset', () => {
             showToast('Sistem antrian telah di-reset oleh Admin. Silakan ambil antrian kembali jika perlu.', 'info');
