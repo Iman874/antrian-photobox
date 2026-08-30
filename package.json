@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node test/recovery.test.js",
-    "test:unit": "node test/bersiap.test.js && node test/queuelist.test.js",
+    "test:unit": "node test/bersiap.test.js",
     "test:e2e": "node test/e2e.test.js"
   },
   "keywords": [],

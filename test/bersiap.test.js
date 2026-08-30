@@ -18,7 +18,7 @@ function mockPool(rows) {
         if (!/^SELECT \* FROM queues/.test(sql)) return [rows];
         const filtered = rows
             .filter(r => r.status === 'waiting' || r.status === 'called')
-            .sort((a, b) => (a.sort_order ?? a.id) - (b.sort_order ?? b.id));
+            .sort((a, b) => a.id - b.id);
         return [filtered.slice(2, 3)];
     };
     return state;
@@ -77,7 +77,7 @@ async function runTests() {
         const line = mockPool([]);
         await getBersiapCandidate('Studio Utama', line);
         assert.ok(line.lastSql.includes("status IN ('waiting', 'called')"), 'filter status');
-        assert.ok(line.lastSql.includes('ORDER BY sort_order ASC, id ASC'), 'urut by sort_order');
+        assert.ok(line.lastSql.includes('ORDER BY id ASC'), 'urut by id');
         assert.ok(line.lastSql.includes('LIMIT 1 OFFSET 2'), 'ambil 1 setelah 2 antrian');
         assert.deepStrictEqual(line.lastParams, ['Studio Utama']);
         ok('SQL: hanya waiting/called, order by id, LIMIT 1 OFFSET 2, param lokasi benar');

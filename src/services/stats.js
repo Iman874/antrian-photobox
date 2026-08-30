@@ -1,13 +1,13 @@
 const { pool } = require('../config/db');
 
-async function getStats(location, db = pool) {
-    const [waiting] = await db.query('SELECT COUNT(*) as cnt, COALESCE(SUM(sessions), 0) as total_sessions FROM queues WHERE studio_location = ? AND status = ?', [location, 'waiting']);
-    const [total] = await db.query('SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ?', [location]);
-    const [nowServing] = await db.query("SELECT * FROM queues WHERE studio_location = ? AND status = 'called' ORDER BY sort_order DESC, id DESC LIMIT 1", [location]);
-    const [settings] = await db.query('SELECT * FROM settings WHERE studio_location = ?', [location]);
+async function getStats(location) {
+    const [waiting] = await pool.query('SELECT COUNT(*) as cnt, COALESCE(SUM(sessions), 0) as total_sessions FROM queues WHERE studio_location = ? AND status = ?', [location, 'waiting']);
+    const [total] = await pool.query('SELECT COUNT(*) as cnt FROM queues WHERE studio_location = ?', [location]);
+    const [nowServing] = await pool.query("SELECT * FROM queues WHERE studio_location = ? AND status = 'called' ORDER BY id DESC LIMIT 1", [location]);
+    const [settings] = await pool.query('SELECT * FROM settings WHERE studio_location = ?', [location]);
 
-    const [queueList] = await db.query(
-        "SELECT id, name, queue_number, sessions, status, created_at FROM queues WHERE studio_location = ? AND status IN ('waiting', 'called') ORDER BY sort_order ASC, id ASC",
+    const [queueList] = await pool.query(
+        "SELECT id, name, queue_number, sessions, status, created_at FROM queues WHERE studio_location = ? AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE() ORDER BY id ASC",
         [location]
     );
 

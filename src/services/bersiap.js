@@ -5,7 +5,7 @@ const { pool } = require('../config/db');
 // Hanya status 'waiting'/'called' yang dihitung (done/cancelled dilewati).
 async function getBersiapCandidate(studio_location, queryable = pool) {
     const [rows] = await queryable.query(
-        "SELECT * FROM queues WHERE studio_location = ? AND status IN ('waiting', 'called') ORDER BY sort_order ASC, id ASC LIMIT 1 OFFSET 2",
+        "SELECT * FROM queues WHERE studio_location = ? AND status IN ('waiting', 'called') ORDER BY id ASC LIMIT 1 OFFSET 2",
         [studio_location]
     );
     return rows.length > 0 ? rows[0] : null;

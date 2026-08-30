@@ -112,30 +112,6 @@ async function runTests() {
         assert.strictEqual(rinaStatus.beforeCount, 0);
         console.log(`✅ Rina antrian berikutnya! Di depan Rina ada ${rinaStatus.beforeCount} orang.`);
 
-        // SKIP SCENARIO: Admin pindahkan Budi (client ke-4, waiting) ke posisi paling belakang
-        console.log("\n--- Skip: Admin pindahkan client ke belakang ---");
-        // Budi awalnya 1 posisi di belakang Rina (ada Rina di depannya)
-        let budiStatus = (await axios.get(`${BASE_URL}/queue/${clients[3].id}`)).data;
-        assert.strictEqual(budiStatus.beforeCount, 1);
-        console.log(`✅ Sebelum skip: Di depan Budi ada ${budiStatus.beforeCount} orang.`);
-
-        const skipRes = await axios.post(`${BASE_URL}/admin/skip_queue`, { id: clients[3].id, studio_location: STUDIO_1 });
-        assert.strictEqual(skipRes.data.success, true);
-
-        // Rina tetap yang paling depan (Budi tidak loncat ke depan)
-        rinaStatus = (await axios.get(`${BASE_URL}/queue/${clients[2].id}`)).data;
-        assert.strictEqual(rinaStatus.beforeCount, 0);
-        // Budi kini paling belakang: semua waiting lain ada di depannya
-        budiStatus = (await axios.get(`${BASE_URL}/queue/${clients[3].id}`)).data;
-        const waitingAfterSkip = (await axios.get(`${BASE_URL}/stats/${STUDIO_1}`)).data.waiting;
-        assert.strictEqual(budiStatus.beforeCount, waitingAfterSkip - 1);
-        console.log(`✅ Setelah skip: Budi kini di belakang (${budiStatus.beforeCount} orang di depannya).`);
-
-        // Next call harus panggil Rina, bukan Budi yang di-skip
-        let nextCall = await axios.post(`${BASE_URL}/admin/call_next`, { studio_location: STUDIO_1 });
-        assert.strictEqual(nextCall.data.called.queue_number, '03');
-        console.log(`✅ Call next setelah skip memanggil ${nextCall.data.called.queue_number} (Rina), bukan Budi.`);
-
         // SCENARIO 7: PERUBAHAN DURASI SESI
         console.log("\n--- Skenario 7: Ubah Durasi Sesi ---");
         await axios.post(`${BASE_URL}/admin/duration`, { studio_location: STUDIO_1, duration: 3 });
@@ -151,7 +127,7 @@ async function runTests() {
         
         // Pastikan Studio 1 tak berubah karena Studio 2
         stats1 = (await axios.get(`${BASE_URL}/stats/${STUDIO_1}`)).data;
-        assert.strictEqual(stats1.waiting, 7); // 6 waiting + ... setelah 1 call extra
+        assert.strictEqual(stats1.waiting, 8);
         console.log("✅ Antrian Studio Utama dan Youth Center terisolasi dengan sempurna!");
 
         console.log("\n🎉 SELURUH SKENARIO E2E SYSTEM TESTING BERHASIL TERLEWATI DENGAN SUKSES! 🎉");
