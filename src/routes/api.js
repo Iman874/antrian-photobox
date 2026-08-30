@@ -150,6 +150,13 @@ router.post('/queue', async (req, res) => {
             [name, nextNum, studio_location, sessions, device_id || null]
         );
 
+        await pool.query(
+            `UPDATE queues
+             SET sort_order = (SELECT m FROM (SELECT COALESCE(MAX(sort_order), 0) + 1 AS m FROM queues WHERE studio_location = ?) t)
+             WHERE id = ?`,
+            [studio_location, result.insertId]
+        );
+
         await broadcastAll(studio_location);
 
         setQueueCookie(res, result.insertId);
@@ -184,12 +191,38 @@ router.post('/admin/cancel_queue', async (req, res) => {
     }
 });
 
+// Admin skip: pindahkan client waiting ke posisi paling belakang
+router.post('/admin/skip_queue', async (req, res) => {
+    const { id, studio_location } = req.body;
+    try {
+        const [rows] = await pool.query(
+            "SELECT * FROM queues WHERE id = ? AND studio_location = ? AND status = 'waiting'",
+            [id, studio_location]
+        );
+        if (rows.length === 0) {
+            return res.json({ success: false, message: 'Antrian tidak bisa di-skip (bukan waiting atau tidak ditemukan)' });
+        }
+
+        await pool.query(
+            `UPDATE queues
+             SET sort_order = (SELECT m FROM (SELECT COALESCE(MAX(sort_order), 0) + 1 AS m FROM queues WHERE studio_location = ?) t)
+             WHERE id = ? AND studio_location = ?`,
+            [studio_location, id, studio_location]
+        );
+
+        await broadcastAll(studio_location);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Admin Call Next
 router.post('/admin/call_next', async (req, res) => {
     const { studio_location } = req.body;
     try {
         await pool.query('UPDATE queues SET status = ? WHERE studio_location = ? AND status = ?', ['done', studio_location, 'called']);
-        const [next] = await pool.query('SELECT * FROM queues WHERE studio_location = ? AND status = ? ORDER BY id ASC LIMIT 1', [studio_location, 'waiting']);
+        const [next] = await pool.query('SELECT * FROM queues WHERE studio_location = ? AND status = ? ORDER BY sort_order ASC, id ASC LIMIT 1', [studio_location, 'waiting']);
 
         if (next.length > 0) {
             await pool.query('UPDATE queues SET status = ? WHERE id = ?', ['called', next[0].id]);
@@ -215,7 +248,7 @@ router.post('/admin/call_next', async (req, res) => {
 router.post('/admin/recall', async (req, res) => {
     const { studio_location } = req.body;
     try {
-        const [current] = await pool.query('SELECT * FROM queues WHERE studio_location = ? AND status = ? ORDER BY id DESC LIMIT 1', [studio_location, 'called']);
+        const [current] = await pool.query('SELECT * FROM queues WHERE studio_location = ? AND status = ? ORDER BY sort_order DESC, id DESC LIMIT 1', [studio_location, 'called']);
         if (current.length > 0) {
             sendSSE('play_audio', current[0], studio_location);
             res.json({ success: true });
@@ -269,7 +302,7 @@ router.get('/queue/list/:location', async (req, res) => {
     try {
         const location = req.params.location;
         const [queues] = await pool.query(
-            "SELECT id, name, queue_number, sessions, status, created_at FROM queues WHERE studio_location = ? AND status IN ('waiting', 'called') AND DATE(created_at) = CURDATE() ORDER BY id ASC",
+            "SELECT id, name, queue_number, sessions, status, created_at FROM queues WHERE studio_location = ? AND status IN ('waiting', 'called') ORDER BY sort_order ASC, id ASC",
             [location]
         );
         res.json(queues);
@@ -355,7 +388,7 @@ router.get('/queue/:id', async (req, res) => {
             return res.json({ queue, beforeCount: 0 });
         }
 
-        const [before] = await pool.query('SELECT COUNT(*) as cnt, COALESCE(SUM(sessions), 0) as total_sessions FROM queues WHERE studio_location = ? AND status = ? AND id < ?', [queue.studio_location, 'waiting', queue.id]);
+        const [before] = await pool.query('SELECT COUNT(*) as cnt, COALESCE(SUM(sessions), 0) as total_sessions FROM queues WHERE studio_location = ? AND status = ? AND sort_order < ?', [queue.studio_location, 'waiting', queue.sort_order]);
         res.json({ queue, beforeCount: before[0].cnt, beforeSessions: parseInt(before[0].total_sessions) });
     } catch (e) {
         res.status(500).json({ error: e.message });

@@ -595,6 +595,26 @@
             background: rgba(255, 71, 87, 0.05);
         }
 
+        .queue-skip-btn {
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 2px solid #E0E0E0;
+            background: white;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #452030;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+
+        .queue-skip-btn:hover {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(6, 214, 160, 0.05);
+        }
+
         .queue-empty {
             text-align: center;
             padding: 24px;
@@ -1021,7 +1041,7 @@
                 const statusClass = q.status === 'called' ? 'called' : 'waiting';
                 const statusText = q.status === 'called' ? 'DIPANGGIL' : 'MENUNGGU';
                 const cancelBtn = q.status === 'waiting'
-                    ? `<button class="queue-cancel-btn" onclick="adminCancelQueue(${q.id})">✕</button>`
+                    ? `<button class="queue-skip-btn" title="Pindah ke belakang" onclick="adminSkipQueue(${q.id})">⏭</button><button class="queue-cancel-btn" onclick="adminCancelQueue(${q.id})">✕</button>`
                     : '';
                 return `
                     <div class="queue-item">
@@ -1202,6 +1222,29 @@
 
         function adminCancelQueue(id) {
             showConfirm('Yakin ingin membatalkan antrian ini?', () => doAdminCancelQueue(id));
+        }
+
+        function adminSkipQueue(id) {
+            showConfirm('Pindahkan antrian ini ke paling belakang?', () => doAdminSkipQueue(id));
+        }
+
+        async function doAdminSkipQueue(id) {
+            try {
+                const res = await fetch('/api/admin/skip_queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, studio_location: loc })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Antrian dipindah ke belakang', 'success');
+                } else {
+                    showToast(data.message || 'Gagal memindah antrian', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('Error koneksi', 'error');
+            }
         }
 
         async function doAdminCancelQueue(id) {
