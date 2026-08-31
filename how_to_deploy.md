@@ -2,7 +2,7 @@
 
 Panduan deploy production ke **VPS** (dan opsi cPanel). Dokumen ini berisi langkah SSH dari nol, konfigurasi server, deploy, dan gotcha yang ditemukan di lapangan supaya tidak terulang.
 
-**Domain produksi**: `antrian.photobox.monogroup.cloud`
+**Domain produksi**: `antrian.photobox.monoframe.id`
 
 ---
 
@@ -12,15 +12,15 @@ Panduan deploy production ke **VPS** (dan opsi cPanel). Dokumen ini berisi langk
 
 | Item | Nilai |
 |------|-------|
-| IP VPS | `<IP_VPS>` (contoh: `203.194.115.85`) |
+| IP VPS | `202.10.43.86` |
 | OS | `<OS>` (contoh: Ubuntu 24.04 LTS) |
-| Akses SSH | `ssh <USER>@<IP_VPS>` (contoh: `ssh root@203.194.115.85`) |
-| App root (git repo) | `<APP_DIR>` (contoh: `/var/www/antrian-photobox`) |
+| Akses SSH | `ssh <USER>@202.10.43.86` |
+| App root (git repo) | `/var/www/monobox/antrian-photobox` |
 | Public root (express static) | `<APP_DIR>/public` |
-| Database | MySQL/MariaDB `127.0.0.1`, DB `<DB_NAME>`, user `<DB_USER>` |
+| Database | MySQL/MariaDB `127.0.0.1`, DB `monf3757_antrian_photobox`, user `monf3757_antrian_photobox` |
 | Node.js | 18+ |
 | PM2 | Wajib (manajemen proses, 1 instance) |
-| Nginx site | `/etc/nginx/sites-available/antrian.photobox.monogroup.cloud` |
+| Nginx site | `/etc/nginx/sites-available/antrian.photobox.monoframe.id` |
 | Env produksi | `.env.production` (gitignored, di-upload via scp) |
 
 > **PENTING**: Aplikasi ini **wajib 1 proses tunggal** agar SSE (real-time) tersinkronisasi ke semua layar. Jangan jalankan multi-instance/cluster.
@@ -219,29 +219,28 @@ pm2 save                      # simpan daftar proses
 
 ### 8.1 Arahkan DNS
 
-Buat record DNS di panel domain:
+Buat record DNS di panel domain `monoframe.id` (DNS berada di hosting terpisah dari VPS):
 
 | Tipe | Nama (Host) | Nilai (Target) |
 |---|---|---|
-| `A` | `antrian` | `<IP_VPS>` |
-| atau `CNAME` | `antrian` | `photobox.monogroup.cloud` |
+| `A` | `antrian` | `202.10.43.86` |
 
 Verifikasi:
 ```bash
-nslookup antrian.photobox.monogroup.cloud
+nslookup antrian.photobox.monoframe.id
 ```
 
 ### 8.2 Buat config Nginx
 
 ```bash
-sudo nano /etc/nginx/sites-available/antrian.photobox.monogroup.cloud
+sudo nano /etc/nginx/sites-available/antrian.photobox.monoframe.id
 ```
 
 Isi:
 ```nginx
 server {
     listen 80;
-    server_name antrian.photobox.monogroup.cloud;
+    server_name antrian.photobox.monoframe.id;
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -258,7 +257,7 @@ server {
 
 Aktifkan:
 ```bash
-sudo ln -s /etc/nginx/sites-available/antrian.photobox.monogroup.cloud /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/antrian.photobox.monoframe.id /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -269,7 +268,7 @@ sudo systemctl reload nginx
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d antrian.photobox.monogroup.cloud
+sudo certbot --nginx -d antrian.photobox.monoframe.id
 ```
 
 Certbot otomatis mengonfigurasi SSL + redirect HTTP ke HTTPS.
@@ -333,11 +332,11 @@ pm2 logs antrian-photobox
 curl -s http://localhost:3000/api/stats/Studio%20Utama
 
 # 4. Cek via domain (harus 200)
-curl -s -o /dev/null -w "http=%{http_code}\n" https://antrian.photobox.monogroup.cloud/api/stats/Studio%20Utama
+curl -s -o /dev/null -w "http=%{http_code}\n" https://antrian.photobox.monoframe.id/api/stats/Studio%20Utama
 ```
 
 ### Uji manual (dari browser)
-- Buka `https://antrian.photobox.monogroup.cloud` → ambil antrian → nomor muncul.
+- Buka `https://antrian.photobox.monoframe.id` → ambil antrian → nomor muncul.
 - Admin `call_next` → display & klien update real-time.
 - `recall`, `cancel`, recovery antrian.
 - Display indoor/outdoor sinkron.
@@ -354,7 +353,7 @@ curl -s -o /dev/null -w "http=%{http_code}\n" https://antrian.photobox.monogroup
 | App lambat di banyak user | Pool MySQL 10 + polling 5s | Naikkan `connectionLimit`, kurangi polling |
 | `.env` ter-commit | `.gitignore` tidak memuat `.env` | Tambahkan `.env` ke `.gitignore` |
 | PM2 tidak auto-start saat reboot | `pm2 startup` belum dijalankan | Jalankan `pm2 startup` + `pm2 save` |
-| HTTPS tidak aktif | Certbot belum dijalankan | `sudo certbot --nginx -d antrian.photobox.monogroup.cloud` |
+| HTTPS tidak aktif | Certbot belum dijalankan | `sudo certbot --nginx -d antrian.photobox.monoframe.id` |
 
 Log error: `pm2 logs antrian-photobox`
 

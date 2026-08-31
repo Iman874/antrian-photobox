@@ -1044,14 +1044,14 @@
             updateDashboardStats(JSON.parse(e.data));
         });
 
-        // FALLBACK POLLING: Paksa update setiap 500ms
+        // FALLBACK POLLING: Cadangan update bila SSE terputus (10 detik)
         setInterval(async () => {
             try {
                 const res = await fetch('/api/stats/' + encodeURIComponent(loc));
                 const stats = await res.json();
                 updateDashboardStats(stats);
             } catch (e) { /* abaikan */ }
-        }, 500);
+        }, 10000);
 
         evtSource.addEventListener('play_audio', (e) => {
             if (!audioEnabled) return;

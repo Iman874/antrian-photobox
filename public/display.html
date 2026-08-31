@@ -335,14 +335,14 @@
             updateStats(JSON.parse(e.data));
         });
 
-        // FALLBACK POLLING: Cadangan update (SSE = jalur utama realtime)
+        // FALLBACK POLLING: Cadangan update bila SSE terputus (10 detik)
         setInterval(async () => {
             try {
                 const res = await fetch('/api/stats/' + encodeURIComponent(loc));
                 const stats = await res.json();
                 updateStats(stats);
             } catch (e) { /* abaikan */ }
-        }, 5000);
+        }, 10000);
 
         // iOS Safari compatible audio system
         let audioCtx = null;

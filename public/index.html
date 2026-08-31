@@ -415,14 +415,14 @@
             updateAllStats(JSON.parse(e.data));
         });
 
-        // FALLBACK POLLING: Paksa update setiap 500ms
+        // FALLBACK POLLING: Cadangan update bila SSE terputus (10 detik)
         setInterval(async () => {
             try {
                 const res = await fetch('/api/stats');
                 const data = await res.json();
                 updateAllStats(data);
             } catch (e) { /* abaikan */ }
-        }, 500);
+        }, 10000);
     </script>
 </body>
 
