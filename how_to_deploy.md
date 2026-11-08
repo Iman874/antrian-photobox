@@ -488,6 +488,16 @@ mysqldump -u root --single-transaction monf3757_antrian_photobox > /root/antrian
 
 **14. Deploy rutin tidak perlu menjalankan test berat.** Cukup `npm run test:unit`; `npm test` dan `npm run test:e2e` baru dipakai di mesin dev dengan DB buangan, sesuai gotcha 13.
 
+**15. `DB_PASS` yang mengandung `#` wajib dikutip di `.env`.** dotenv 16.6.1 memotong nilai tidak dikutip tepat di tanda `#` (terukur: `FAKE12#rest34` terbaca `"FAKE12"`). Karena `initDB()` dijalankan sebelum `listen()` dan kegagalannya hanya `.catch(console.error)`, akibatnya adalah PM2 berstatus online tanpa listener dan nginx membalas 502 — bukan pesan error yang jelas. Perbaikan cepat di server, tanpa perlu menampilkan password:
+
+```bash
+sed -i -E 's/^DB_PASS=([^"][^[:space:]]*)[[:space:]]*$/DB_PASS="\1"/' .env
+pm2 restart antrian-photobox --update-env
+curl -s "http://127.0.0.1:3000/api/stats/Studio%20Utama"; echo
+```
+
+`deploy.sh` sekarang mengutip nilai itu sendiri saat menulis `.env`, lalu menolak melanjutkan kalau port aplikasi tidak menjawab 200.
+
 ---
 
 ## 13. Troubleshooting cepat

@@ -312,6 +312,14 @@ run_env_file() {
     log "Buat .env dari $ENV_SRC"
     cp "$ENV_SRC" "$APP_DIR/.env"
   fi
+  # dotenv 16 memotong nilai tepat di tanda '#' kalau nilai itu tidak dikutip, jadi
+  # DB_PASS yang mengandung '#' akan terbaca sebagian dan initDB() gagal diam-diam.
+  # Nilai dikutip apa adanya; tidak ada isi yang dicetak.
+  if grep -qE '^DB_PASS=[^"]' "$APP_DIR/.env"; then
+    sed -i -E 's/^DB_PASS=([^"][^[:space:]]*)[[:space:]]*$/DB_PASS="\1"/' "$APP_DIR/.env"
+    log "DB_PASS di .env dikutip agar tidak terpotong di tanda '#'"
+  fi
+
   # Tampilkan kunci saja, nilai password tidak dicetak.
   log "Kunci di .env: $(sed -n 's/^[[:space:]]*\([A-Z_]*\)=.*/\1/p' "$APP_DIR/.env" | tr '\n' ' ')"
 }
@@ -341,6 +349,23 @@ run_pm2() {
   fi
   pm2 save
   pm2 startup >/dev/null 2>&1 || warn "pm2 startup menghasilkan instruksi manual; jalankan perintah yang dicetaknya agar auto-start saat reboot"
+}
+
+# initDB() dipanggil sebelum listen() dan kegagalannya hanya ditelan .catch(console.error),
+# jadi PM2 bisa menampilkan "online" tanpa ada listener sama sekali. Cek ini memaksa
+# kegagalan itu terlihat saat deploy, bukan saat layar customer balas 502.
+run_listen_check() {
+  local i code=000
+  for i in 1 2 3 4 5; do
+    code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "http://127.0.0.1:$PORT/api/stats/Studio%20Utama" || echo 000)"
+    [ "$code" = "200" ] && break
+    sleep 2
+  done
+  if [ "$code" != "200" ]; then
+    pm2 logs antrian-photobox --lines 25 --nostream || true
+    die "aplikasi tidak menjawab 200 di port $PORT (terakhir: $code). Penyebab tersering: DB_PASS tidak cocok, DB_NAME salah, atau port dipakai layanan lain." 1
+  fi
+  log "Listener port $PORT menjawab 200"
 }
 
 run_nginx() {
@@ -457,6 +482,7 @@ if [ "$MODE" = "full" ]; then
   if [ "$SETUP_DB" = "1" ]; then run_db; fi
   run_install
   run_pm2
+  run_listen_check
   if [ "$NGINX" = "1" ]; then run_nginx; fi
   if [ "$SSL" = "1" ]; then run_ssl; fi
 else
@@ -464,6 +490,7 @@ else
   run_env_file
   run_install
   run_pm2
+  run_listen_check
 fi
 
 run_verify
