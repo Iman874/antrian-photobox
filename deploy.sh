@@ -251,7 +251,7 @@ SQL
 # ----------------------------------------------------------------------------- kode
 run_code() {
   need git
-  local script_name extra
+  local script_name extra dirty
   script_name="$(basename "${BASH_SOURCE[0]}")"
   if [ ! -d "$APP_DIR/.git" ]; then
     log "Bootstrap: $APP_DIR belum berupa repo git, ambil branch $GIT_BRANCH dari $REPO_URL"
@@ -277,9 +277,13 @@ run_code() {
       fi
     fi
   elif [ "$PULL" = "1" ]; then
-    if [ -n "$(git -C "$APP_DIR" status --porcelain)" ] && [ "$ALLOW_DIRTY" != "1" ]; then
-      git -C "$APP_DIR" status --short
-      die "working tree $APP_DIR kotor. Commit atau kembalikan perubahan itu lebih dulu, atau pakai --allow-dirty." 4
+    # Skrip yang sedang dijalankan ini sendiri tidak boleh dihitung sebagai kotoran:
+    # setelah bootstrap clone dari salinan scp, deploy.sh memang belum terlacak di repo
+    # yang ada di server (commit pembersihnya bisa jadi belum di-push).
+    dirty="$(git -C "$APP_DIR" status --porcelain | grep -v -x -F "?? $script_name" || true)"
+    if [ -n "$dirty" ] && [ "$ALLOW_DIRTY" != "1" ]; then
+      printf '%s\n' "$dirty"
+      die "working tree $APP_DIR kotor (lihat daftar di atas). Commit atau simpan perubahan itu lebih dulu, atau pakai --allow-dirty." 4
     fi
     log "git fetch + merge --ff-only origin/$GIT_BRANCH"
     if ! GIT_TERMINAL_PROMPT=0 git -C "$APP_DIR" fetch origin "$GIT_BRANCH"; then
