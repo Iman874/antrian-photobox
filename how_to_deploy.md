@@ -62,35 +62,47 @@ Setelah masuk: `whoami` harus `root`.
 
 ## 2. Deploy sekali jalan dengan `deploy.sh`
 
-Skrip `deploy.sh` ada di root repo ini dan **dijalankan di server**, bukan dari laptop. Ia tidak melakukan SSH keluar: mesin tempat ia dijalankan dianggap target.
+Skrip `deploy.sh` ada di root repo ini, **dijalankan di server dari dalam folder app**, dan mendeteksi foldernya sendiri sebagai `APP_DIR`. Ia tidak melakukan SSH keluar: mesin tempat ia dijalankan dianggap target.
 
-### 2.1 Kirim skrip dan env ke server (dari laptop)
+### 2.1 Kirim kode ke server (dari laptop)
+
+Opsi A, kirim folder repo apa adanya (`.git` ikut, jadi update berikutnya `git pull` jalan):
 
 ```bash
-mkdir -p /var/www/monobox   # kalau belum ada, jalankan lewat ssh sekali:
 ssh root@103.123.62.39 "mkdir -p /var/www/monobox"
+scp -r D:/Iman874/Documents/Github/antrian-photobox root@103.123.62.39:/var/www/monobox/
+```
 
-scp D:/Iman874/Documents/Github/antrian-photobox/deploy.sh root@103.123.62.39:/root/deploy.sh
-scp D:/Iman874/Documents/Github/antrian-photobox/.env.production root@103.123.62.39:/var/www/monobox/env.production
+Opsi B, kirim skripnya saja dan biarkan skrip men-clone dirinya sendiri (bootstrap `git init` + fetch). Ini jalan karena satu-satunya berkas di folder itu adalah `deploy.sh`:
+
+```bash
+ssh root@103.123.62.39 "mkdir -p /var/www/monobox/antrian-photobox"
+scp D:/Iman874/Documents/Github/antrian-photobox/deploy.sh root@103.123.62.39:/var/www/monobox/antrian-photobox/
+```
+
+Env tidak perlu dikirim terpisah: `ENV_SRC` bawaan skrip adalah `<APP_DIR>/.env.production`, dan file itu ikut terkirim atau ter-clone karena ter-commit di repo. Kirim ulang hanya kalau `DB_PASS` lokal mau mengganti yang di server:
+
+```bash
+scp D:/Iman874/Documents/Github/antrian-photobox/.env.production root@103.123.62.39:/var/www/monobox/antrian-photobox/.env.production
 ```
 
 Kalau `DB_PASS` di `.env.production` masih berisi kredensial cPanel lama, ganti dulu nilainya dengan password MariaDB yang dipakai di server ini (lihat gotcha 1 soal kredensial yang sudah ter-commit).
-
-`ENV_SRC` bawaan skrip adalah `<APP_DIR>/.env.production`, dan file itu ikut ter-clone karena ter-commit di repo — jadi kalau isinya sudah benar, langkah scp di atas tidak diperlukan. Kirim ulang hanya kalau nilai lokal mau mengganti yang ada di server.
 
 ### 2.2 Baca kondisi server dulu (tidak menulis apa pun)
 
 ```bash
 ssh root@103.123.62.39
-bash /root/deploy.sh --check
+cd /var/www/monobox/antrian-photobox
+bash deploy.sh --check
 ```
 
-`--check` menampilkan versi node, pm2, nginx, mysql, apakah port 3000 bebas, apakah vhost dan sertifikat sudah ada, plus IP box. Semua yang belum ada akan dipasang pada langkah berikutnya.
+`--check` menampilkan versi node, pm2, nginx, mysql, apakah port 3000 bebas, apakah vhost dan sertifikat sudah ada, plus IP box. Baris `App dir` dan `.env produksi` dihitung dari folder tempat skrip berada, jadi pastikan `pwd`-nya benar. Semua yang belum ada akan dipasang pada langkah berikutnya.
 
 ### 2.3 Jalankan deploy penuh
 
 ```bash
-ENV_SRC=/var/www/monobox/env.production bash /root/deploy.sh
+cd /var/www/monobox/antrian-photobox
+SSL_EMAIL=rosuliman874@gmail.com bash deploy.sh
 ```
 
 Yang dilakukan skrip, berurutan: pasang paket yang belum ada (nginx, certbot, ufw, Node 20, PM2 global, client MariaDB) lalu clone `main` ke `APP_DIR` (repo privat: ganti `REPO_URL` ke bentuk SSH) lalu salin `ENV_SRC` ke `<APP_DIR>/.env` (versi lama dicadang `.env.bak-<timestamp>`) lalu buat DB, user, dan grant `@localhost` plus `@127.0.0.1`, uji koneksi TCP lalu `npm ci --omit=dev` lalu `pm2 start ecosystem.config.js --env production` dan `pm2 save` lalu tulis vhost nginx khusus domain ini (file lama dicadang, `nginx -t` harus lulus sebelum reload) lalu certbot dengan redirect HTTPS lalu verifikasi dengan curl.
@@ -98,17 +110,17 @@ Yang dilakukan skrip, berurutan: pasang paket yang belum ada (nginx, certbot, uf
 Bentuk lain:
 
 ```bash
-bash /root/deploy.sh --minimal              # update rutin: pull + npm ci + pm2 restart
-bash /root/deploy.sh --no-ssl               # deploy penuh, HTTPS nanti
-bash /root/deploy.sh --no-nginx --no-db     # hanya app, nginx dan DB disentuh manual
-bash /root/deploy.sh --reset-db-password    # paksa password user DB disamakan dengan .env
-bash /root/deploy.sh --help                 # daftar flag dan berkas yang ditulis
+bash deploy.sh --minimal              # update rutin: pull + npm ci + pm2 restart
+bash deploy.sh --no-ssl               # deploy penuh, HTTPS nanti
+bash deploy.sh --no-nginx --no-db     # hanya app, nginx dan DB disentuh manual
+bash deploy.sh --reset-db-password    # paksa password user DB disamakan dengan .env
+bash deploy.sh --help                 # daftar flag dan berkas yang ditulis
 ```
 
 Variabel yang bisa di-override: `APP_DIR REPO_URL GIT_BRANCH DOMAIN PORT DB_NAME DB_USER ENV_SRC SSL_EMAIL`. Contoh pakai port lain:
 
 ```bash
-PORT=3010 bash /root/deploy.sh --check
+PORT=3010 bash deploy.sh --check
 ```
 
 Kode keluar: `0` sukses, `1` error fatal, `2` argumen tidak dikenal, `3` prasyarat kurang, `4` working tree app kotor (pakai `--allow-dirty` untuk tetap jalan).
@@ -399,7 +411,7 @@ Uji manual dari browser (bagian yang tidak bisa dibuktikan dari terminal):
 Paling singkat:
 
 ```bash
-bash /root/deploy.sh --minimal
+cd /var/www/monobox/antrian-photobox && bash deploy.sh --minimal
 ```
 
 Manual, sama hasilnya:
@@ -491,7 +503,7 @@ mysqldump -u root --single-transaction monf3757_antrian_photobox > /root/antrian
 | `conflicting server name` | vhost lain memakai `server_name` sama | `grep -rn server_name /etc/nginx/sites-enabled/` |
 | Tampilan kosong sebagian | browser tidak bisa akses CDN | bukan masalah server; cek `fonts.googleapis.com` dan `cdn.jsdelivr.net` |
 | Suara notifikasi gagal | egress ke translate.google.com diblokir | gotcha 5 |
-| `$'\r': command not found` | `deploy.sh` tersimpan dengan CRLF | `sed -i 's/\r$//' /root/deploy.sh` |
+| `$'\r': command not found` | `deploy.sh` tersimpan dengan CRLF | `sed -i 's/\r$//' deploy.sh` |
 | Baris `users` terus bertambah | seed tanpa unique key tiap restart | gotcha 2 |
 
 ---

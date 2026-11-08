@@ -43,7 +43,11 @@
 set -euo pipefail
 
 # ----------------------------------------------------------------------------- konfigurasi
-APP_DIR="${APP_DIR:-/var/www/monobox/antrian-photobox}"
+# Skrip dijalankan DARI DALAM folder app, seperti skrip deploy service lain di ekosistem
+# ini. Karena itu APP_DIR default adalah folder tempat skrip ini berada, bukan lokasi
+# yang dikarang di header.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="${APP_DIR:-$SCRIPT_DIR}"
 REPO_URL="${REPO_URL:-https://github.com/Iman874/antrian-photobox.git}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 DOMAIN="${DOMAIN:-antrian.photobox.monoframe.id}"
@@ -140,7 +144,7 @@ run_check() {
 
   local proc="pm2 belum terpasang"
   if command -v pm2 >/dev/null 2>&1; then
-    proc="$(pm2 jlist 2>/dev/null | grep -o '"name":"antrian-photobox"' | head -1)"
+    proc="$(pm2 jlist 2>/dev/null | grep -o '"name":"antrian-photobox"' | head -1 || true)"
     [ -n "$proc" ] || proc='antrian-photobox belum terdaftar'
   fi
   printf 'PM2 proses    : %s\n' "$proc"
@@ -247,20 +251,31 @@ SQL
 # ----------------------------------------------------------------------------- kode
 run_code() {
   need git
+  local script_name extra
+  script_name="$(basename "${BASH_SOURCE[0]}")"
   if [ ! -d "$APP_DIR/.git" ]; then
-    if [ -d "$APP_DIR" ] && [ -n "$(ls -A "$APP_DIR" 2>/dev/null)" ]; then
-      die "$APP_DIR sudah ada dan berisi, tapi bukan repo git. Pindahkan isinya dulu atau pakai APP_DIR lain." 3
-    fi
-    log "Clone $REPO_URL (branch $GIT_BRANCH) ke $APP_DIR"
+    log "Bootstrap: $APP_DIR belum berupa repo git, ambil branch $GIT_BRANCH dari $REPO_URL"
+    mkdir -p "$APP_DIR"
     # GIT_TERMINAL_PROMPT=0: repo privat membuat git meminta password di terminal
     # dan skrip menggantung tanpa pesan. Biarkan gagal, lalu beri petunjuk.
-    mkdir -p "$APP_DIR"
-    git init "$APP_DIR"
+    git -C "$APP_DIR" init
     git -C "$APP_DIR" remote add origin "$REPO_URL"
     if ! GIT_TERMINAL_PROMPT=0 git -C "$APP_DIR" fetch origin "$GIT_BRANCH"; then
       die "fetch gagal. Kalau repo privat, jalankan dengan REPO_URL=git@github.com:Iman874/antrian-photobox.git dan deploy key terpasang, atau kirim foldernya lewat scp." 1
     fi
-    git -C "$APP_DIR" checkout -B "$GIT_BRANCH" FETCH_HEAD
+    if ! git -C "$APP_DIR" checkout -B "$GIT_BRANCH" FETCH_HEAD; then
+      # git menolak menimpa berkas yang belum terlacak. Satu-satunya keadaan yang
+      # boleh ditimpa tanpa bertanya: folder ini hanya berisi skrip itu sendiri,
+      # yaitu skrip yang baru saja di-scp dan memang versi ter-commit yang sama.
+      extra="$(ls -A "$APP_DIR" | grep -v -x -F '.git' | grep -v -x -F "$script_name" || true)"
+      if [ -z "$extra" ]; then
+        log "Folder hanya berisi $script_name, pakai salinan dari GitHub"
+        git -C "$APP_DIR" checkout -f -B "$GIT_BRANCH" FETCH_HEAD
+      else
+        printf '%s\n' "$extra"
+        die "checkout menolak menimpa berkas di atas. Simpan berkas itu lebih dulu, lalu ulangi." 1
+      fi
+    fi
   elif [ "$PULL" = "1" ]; then
     if [ -n "$(git -C "$APP_DIR" status --porcelain)" ] && [ "$ALLOW_DIRTY" != "1" ]; then
       git -C "$APP_DIR" status --short
