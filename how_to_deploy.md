@@ -11,8 +11,8 @@ Dokumen: diperbarui 2026-11-08. Perintah di blok `bash` dijalankan sebagai `root
 
 | Kandidat | IP | Sudah ada di box | Rekomendasi |
 |---|---|---|---|
-| VPS 2 `monodev` | `103.123.62.39` | nginx + certbot, MariaDB, Laravel `backend_v3`, SPA `dash.monodev.id`, pola path `/var/www/monobox/` | **Dipakai** (default dokumen dan skrip) |
-| VPS 1 idcloudhost | `203.194.115.85` | backend produksi kios, admin, AI Service port 4000 | Hanya kalau VPS 2 tidak bisa dipakai |
+| VPS 2 idcloudhost | `103.123.62.39` | nginx + certbot, MariaDB, Laravel `backend_v3`, pola path `/var/www/monobox/` | **Dipakai** (default dokumen dan skrip) |
+| VPS 1 Rumahweb (host `monodev`) | `203.194.115.85` | backend produksi kios, admin, AI Service port 4000 | Hanya kalau VPS 2 tidak bisa dipakai |
 
 Alasan: aplikasi ini service mandiri (DB sendiri, tidak memanggil backend kios). Menaruhnya di box produksi menambah radius kegagalan ke trafik kios yang membayar — proses Node tunggal dengan koneksi SSE jangka panjang, plus potensi restart-loop kalau DB belum siap. VPS 2 sudah punya nginx, certbot, MariaDB, dan pola folder yang sama, jadi tidak ada instalasi sistem baru.
 
@@ -22,7 +22,7 @@ Kalau jadi pindah ke VPS 1, yang berubah hanya IP target dan cek tabrakan port (
 
 | Item | Nilai |
 |---|---|
-| SSH | `ssh root@monodev` atau `ssh root@103.123.62.39` |
+| SSH | `ssh root@103.123.62.39` (VPS 2 idcloudhost). Jangan pakai alias `monodev` di dokumen ini: alias itu milik VPS 1 Rumahweb |
 | App root | `/var/www/monobox/antrian-photobox` |
 | Public root (Express static) | `<APP_DIR>/public` |
 | Port Node | `3000` |
@@ -42,10 +42,10 @@ Tiga hal yang wajib dipahami sebelum eksekusi:
 ## 1. Cara SSH ke VPS
 
 ```bash
-ssh root@monodev
-# atau
-ssh root@103.123.62.39
+ssh root@103.123.62.39        # VPS 2 idcloudhost, target dokumen ini
 ```
+
+> Alias `monodev` di laptop menunjuk ke VPS 1 Rumahweb (`203.194.115.85`), yaitu box produksi kios. Jangan memakai alias itu untuk langkah-langkah di dokumen ini; semua perintah di bawah menganggap mesin yang dituju adalah `103.123.62.39`.
 
 Koneksi pertama menanyakan fingerprint host, ketik `yes`. Login tanpa password (sekali saja):
 
@@ -328,7 +328,7 @@ certbot --nginx -d antrian.photobox.monoframe.id
 certbot renew --dry-run
 ```
 
-`grep server_name` sebelum `nginx -t` bukan formalitas: kalau ada vhost lain dengan `server_name` sama, nginx menolak reload karena *conflicting server name*. Vhost yang sudah ada di box ini (`dash.monodev.id`, `backend.monodev.id`, dan blok untuk `103.123.62.39`) tidak boleh disentuh.
+`grep server_name` sebelum `nginx -t` bukan formalitas: kalau ada vhost lain dengan `server_name` sama, nginx menolak reload karena *conflicting server name*. Daftar vhost yang benar-benar ada terbaca dari grep itu (catatan proyek September menyebut `dash.monodev.id` dan `backend.monodev.id` di box ini, tapi jangan mengutipnya tanpa melihat hasil grep). Jangan menimpa atau menonaktifkan salah satu vhost yang sudah ada.
 
 Certbot menambahkan `listen 443` dan redirect 80 ke 443. HTTPS bukan pilihan: halaman memakai Notification API dan SSE, dan keduanya tidak berjalan di browser modern lewat HTTP biasa.
 
